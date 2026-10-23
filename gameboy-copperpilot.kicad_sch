@@ -1,0 +1,1 @@
+(kicad_sch (version 20260306) (generator "eeschema") (generator_version "10.0") (uuid 295a48e3-8aa4-4c9e-bcb0-63b28d22fc14) (paper "A3") (title_block (title "ESP32-S3 Handheld Console") (date "2026-10-23") (rev "1.0")) (lib_symbols) (sheet_instances (path "/" (page "1"))) (embedded_fonts no))
