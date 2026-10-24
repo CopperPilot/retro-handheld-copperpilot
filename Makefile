@@ -2,7 +2,7 @@
 # GKD Pixel ESP32-S3 Handheld Console - Unified Root Build & Verification Makefile
 # ==============================================================================
 
-PROJECT_NAME := gameboy-copperpilot
+PROJECT_NAME := copperpilot-retro-handheld
 PCB_FILE     := $(PROJECT_NAME).kicad_pcb
 SCH_FILE     := $(PROJECT_NAME).kicad_sch
 PRO_FILE     := $(PROJECT_NAME).kicad_pro
