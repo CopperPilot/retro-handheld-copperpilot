@@ -21,10 +21,10 @@ endif
 
 KICAD_CLI    := kicad-cli
 
-.PHONY: all help erc drc lint test test-pcb test-case gerbers drill zip-gerbers pos cpl bom d356 pdf spec fab bundle build-case render-case clean distclean
+.PHONY: all help erc drc lint fmt fmt-check test test-pcb test-case gerbers drill zip-gerbers pos cpl bom d356 pdf spec fab bundle build-case render-case clean distclean
 
 # Default target executes automated hardware and mechanical test suites
-all: test drc erc
+all: fmt-check lint test
 
 help:
 	@echo "======================================================================"
@@ -36,7 +36,9 @@ help:
 	@echo "  make test-case   - Run 15-point automated 3D mechanical enclosure suite"
 	@echo "  make drc         - Run KiCad CLI Design Rule Check on PCB layout (asserts 0 errors, 100% routed)"
 	@echo "  make erc         - Run KiCad CLI Electrical Rule Check on schematic (asserts 0 errors)"
-	@echo "  make lint        - Run DRC, ERC, and structural design checks"
+	@echo "  make lint        - Run DRC, ERC, and structural Python static analysis"
+	@echo "  make fmt         - Auto-format Python sources and test suites with ruff"
+	@echo "  make fmt-check   - Non-destructive code formatting compliance check"
 	@echo ""
 	@echo "Manufacturing & Release Targets (Lion Circuits 4-Layer Turnkey PCBA):"
 	@echo "  make fab         - Package complete release zip (Gerbers, Drill, CPL, BOM, D356, PDFs, SPEC)"
@@ -60,6 +62,29 @@ help:
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(GERBER_DIR)
+
+# ------------------------------------------------------------------------------
+# Formatting & Static Analysis
+# ------------------------------------------------------------------------------
+fmt:
+	@echo "==> Formatting Python source files and test suites with ruff..."
+	@if command -v ruff > /dev/null; then \
+		ruff format . ; \
+	elif [ -n "$(wildcard $(UV))" ]; then \
+		$(UV) run --with ruff ruff format . ; \
+	else \
+		echo "Notice: ruff not installed. Skipping Python formatting."; \
+	fi
+
+fmt-check:
+	@echo "==> Checking Python code formatting compliance..."
+	@if command -v ruff > /dev/null; then \
+		ruff format --check . ; \
+	elif [ -n "$(wildcard $(UV))" ]; then \
+		$(UV) run --with ruff ruff format --check . ; \
+	else \
+		echo "Notice: ruff not installed. Skipping Python format check."; \
+	fi
 
 # ------------------------------------------------------------------------------
 # Hardware Verification
@@ -88,6 +113,15 @@ drc: $(BUILD_DIR)
 	@echo "DRC Clean: 0 errors, 0 unconnected items (100% routed)."
 
 lint: erc drc
+	@echo "==> Running Python static analysis and linting..."
+	@if command -v ruff > /dev/null; then \
+		ruff check . ; \
+	elif [ -n "$(wildcard $(UV))" ]; then \
+		$(UV) run --with ruff ruff check . ; \
+	else \
+		echo "Notice: ruff not installed. Skipping Python linting."; \
+	fi
+	@echo "Lint clean: ERC, DRC, and Python static analysis passed."
 
 test:
 	@echo "==> Running full automated test suite (PyTest)..."

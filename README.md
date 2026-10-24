@@ -3,7 +3,7 @@
 [![KiCad EDA](https://img.shields.io/badge/KiCad-v10.0.4-brightgreen.svg)](gameboy-copperpilot.kicad_pro)
 [![DRC Status](https://img.shields.io/badge/DRC-Zero%20Errors%20%7C%20100%25%20Routed-brightgreen.svg)](gameboy-copperpilot.kicad_pcb)
 [![ERC Status](https://img.shields.io/badge/ERC-Zero%20Errors-brightgreen.svg)](gameboy-copperpilot.kicad_sch)
-[![Lion Circuits Turnkey](https://img.shields.io/badge/Fab-Lion%20Circuits%204--Layer-orange.svg)](build/ORDER_SPEC.md)
+[![Lion Circuits Turnkey](https://img.shields.io/badge/Fab-Lion%20Circuits%204--Layer-orange.svg)](#lion-circuits-4-layer-manufacturing--pcba-specifications)
 [![3D Enclosure](https://img.shields.io/badge/Case-Watertight%20Snap--Fit%20STLs-blue.svg)](case/)
 [![Automated Tests](https://img.shields.io/badge/Tests-35%2F35%20Passed-success.svg)](tests/)
 
@@ -154,6 +154,42 @@ An ultra-compact, high-performance, single-board retro handheld gaming console b
 | 39 | `IO1` | `/VBAT_SENSE`| Battery Voltage Telemetry (`ADC1_CH0`) | Analog Input (1:2 Divider: 0–2.1V ADC Range) |
 | 40 | `GND` | `GND` | Common Ground Return | Power Ground Plane |
 | 41 | `EP` | `GND` | Exposed Thermal Ground Pad | Solder-Mask Windowpane Thermal Vias to GND |
+
+---
+
+## Key Bill of Materials (BOM)
+
+| Designator | Qty | Value / Component | Package | Manufacturer | Manufacturer Part Number (MPN) | Description |
+| :--- | :---: | :--- | :--- | :--- | :--- | :--- |
+| `U4` | 1 | ESP32-S3-WROOM-1 | SMD-41 | Espressif Systems | `ESP32-S3-WROOM-1-N8R2` | Dual-Core Xtensa LX7 @ 240MHz, 8MB Flash, 2MB PSRAM |
+| `U1` | 1 | USBLC6-2SC6 | SOT-23-6 | STMicroelectronics | `USBLC6-2SC6` | Low Capacitance Dual-Line Rail-to-Rail ESD Protection |
+| `U2` | 1 | MCP73831-2-OT | SOT-23-5 | Microchip Technology | `MCP73831T-2ACI/OT` | 500mA Li-Po/Li-Ion Linear Charge Management Controller |
+| `U3` | 1 | AP2112K-3.3 | SOT-23-5 | Diodes Incorporated | `AP2112K-3.3TRG1` | Ultra-Low Dropout 600mA CMOS LDO Regulator (250mV Vdo) |
+| `Q1` | 1 | AO3401A | SOT-23 | Alpha & Omega Semi | `AO3401A` | P-Channel MOSFET -30V, -4.0A, RDS(on) < 50mΩ (Load Sharing) |
+| `Q2` | 1 | 2N7002 | SOT-23 | Nexperia / ON Semi | `2N7002,215` | N-Channel TrenchFET 60V 300mA (Display Backlight Driver) |
+| `D2` | 1 | MBR0520 | SOD-123 | ON Semiconductor | `MBR0520LT1G` | Schottky Barrier Diode 20V 0.5A, Low VF = 0.38V |
+| `D1` | 1 | LED_RED | 0603 SMD | Lite-On Inc. | `LTST-C190KRKT` | Red LED 639nm 54mcd 20mA (Charge Active Status) |
+| `D3` | 1 | LED_GREEN | 0603 SMD | Lite-On Inc. | `LTST-C190KGKT` | Green LED 571nm 35mcd 20mA (Power Good / 3.3V Rail) |
+| `J1` | 1 | USB-C 16-Pin | Top-Mount | Korean Hroparts / GCT | `TYPE-C-31-M-12 / USB4105-GF-A` | USB 2.0 Type-C 16-pin Receptacle + 4 TH Shield Tabs |
+| `J2` | 1 | JST-PH 2-Pin | RA Shrouded | JST Sales America | `S2B-PH-K-S(LF)(SN)` | 2.00mm Pitch Right-Angle Battery Header (1S Li-Po) |
+| `J3` | 1 | ILI9341 Socket | 1x10 2.54mm | Samtec / Custom | `SSW-110-01-G-S` | 10-Pin 2.54mm Pitch Display Socket Header (2.4" TFT) |
+| `SW1` | 1 | SW_SPDT | RA PCM12 | C&K / Korean Hroparts | `SS-12D00G3 / MSK-12C02` | SPDT Slide Switch Right-Angle Through-Hole (Power On/Off) |
+| `SW4`–`SW11` | 8 | PTS645 6x6mm | SMD 4.3mm | C&K / Omron | `PTS645SM43SMTR92 LFS` | Tactile Switch SPST 6.0x6.0mm (D-Pad UP/DN/L/R & ABXY) |
+| `SW2,SW3,SW12,SW13` | 4 | PTS636 6x3.5mm | SMD 2.5mm | C&K Components | `PTS636 SM25 LFS` | Tactile Switch SPST-NO 6.0x3.5mm (Select, Start, Boot, Reset) |
+| `SW14`–`SW17` | 4 | B3U-3000P | Ultra-Small SMD | Omron Electronics | `B3U-3000P` | Ultra-Small Tactile Switch 3.0x2.5x1.2mm (Shoulder L1/L2/R1/R2) |
+| `C9, C11` | 2 | 22uF | 0805 SMD | Murata / TDK / Yageo | `GRM21BR61C226ME44L` | Ceramic Capacitor 22uF 16V X5R +/-20% |
+| `C1, C4, C7, C14` | 4 | 10uF | 0805 SMD | Murata / TDK / Yageo | `GRM21BR61E106KA73L` | Ceramic Capacitor 10uF 25V X5R +/-10% |
+| `C3` | 1 | 4.7uF | 0603 SMD | Murata / TDK / Yageo | `GRM188R61A475KE15D` | Ceramic Capacitor 4.7uF 10V X5R +/-10% |
+| `C13` | 1 | 1uF | 0603 SMD | Murata / TDK / Yageo | `GRM188R71C105KA12D` | Ceramic Capacitor 1uF 16V X7R +/-10% |
+| `C2,C5,C6,C8,C10,C12,C15` | 7 | 100nF | 0603 SMD | Murata / TDK / Yageo | `GRM188R71H104KA93D` | Ceramic Capacitor 100nF 50V X7R +/-10% |
+| `R11`–`R13, R17`–`R30` | 17 | 10k | 0603 SMD | Yageo / Panasonic | `RC0603FR-0710KL` | Thick Film Resistor 10k 1% 1/10W (Button Pull-ups & EN) |
+| `R3, R4` | 2 | 5.1k 1% | 0603 SMD | Yageo / Panasonic | `RC0603FR-075K1L` | Thick Film Resistor 5.1k 1% 1/10W (USB-C CC1/CC2 Pulldown) |
+| `R6` | 1 | 2.0k 1% | 0603 SMD | Yageo / Panasonic | `RC0603FR-072KL` | Thick Film Resistor 2.0k 1% 1/10W (MCP73831 500mA PROG) |
+| `R1, R2` | 2 | 22 | 0603 SMD | Yageo / Panasonic | `RC0603FR-0722RL` | Thick Film Resistor 22 1% 1/10W (USB D+/D- Damping) |
+| `R14` | 1 | 10 | 0805 SMD | Yageo / Panasonic | `RC0805FR-0710RL` | Thick Film Resistor 10 1% 1/8W (LCD Backlight Ballast) |
+| `R7, R16` | 2 | 100k | 0603 SMD | Yageo / Panasonic | `RC0603FR-07100KL` | Thick Film Resistor 100k 1% 1/10W (MOSFET Gate Pull-up) |
+| `R8, R9` | 2 | 100k 1% | 0603 SMD | Yageo / Panasonic | `RC0603FR-07100KL` | Precision Resistor 100k 1% 1/10W (Battery Divider Telemetry) |
+| `R5, R10, R15` | 3 | 1k | 0603 SMD | Yageo / Panasonic | `RC0603FR-071KL` | Thick Film Resistor 1k 1% 1/10W (Status LEDs & Gate Drive) |
 
 ---
 

@@ -8,9 +8,7 @@ import argparse
 import csv
 import os
 import re
-import shutil
 import subprocess
-import sys
 import zipfile
 
 PROJECT_NAME = "gameboy-copperpilot"
@@ -116,12 +114,17 @@ def export_gerbers():
     print("==> [1/8] Exporting 4-Layer RS-274X Gerbers for Lion Circuits...")
     layers = "F.Cu,In1.Cu,In2.Cu,B.Cu,F.SilkS,B.SilkS,F.Mask,B.Mask,F.Paste,B.Paste,Edge.Cuts"
     cmd = [
-        "kicad-cli", "pcb", "export", "gerbers",
-        "-l", layers,
+        "kicad-cli",
+        "pcb",
+        "export",
+        "gerbers",
+        "-l",
+        layers,
         "--no-x2",
         "--subtract-soldermask",
-        "-o", f"{GERBER_DIR}/",
-        PCB_FILE
+        "-o",
+        f"{GERBER_DIR}/",
+        PCB_FILE,
     ]
     subprocess.run(cmd, check=True)
     print("    Gerber layers exported successfully.")
@@ -131,12 +134,18 @@ def export_drill():
     ensure_dirs()
     print("==> [2/8] Exporting NC Excellon Drill Files...")
     cmd = [
-        "kicad-cli", "pcb", "export", "drill",
-        "--format", "excellon",
-        "--drill-origin", "absolute",
+        "kicad-cli",
+        "pcb",
+        "export",
+        "drill",
+        "--format",
+        "excellon",
+        "--drill-origin",
+        "absolute",
         "--excellon-separate-th",
-        "-o", f"{GERBER_DIR}/",
-        PCB_FILE
+        "-o",
+        f"{GERBER_DIR}/",
+        PCB_FILE,
     ]
     subprocess.run(cmd, check=True)
     print("    NC Drill files exported successfully.")
@@ -158,12 +167,19 @@ def export_cpl():
     print("==> [4/8] Generating SMT Component Centroid / Pick-and-Place (CPL) File...")
     cpl_path = os.path.join(BUILD_DIR, "cpl.csv")
     cmd = [
-        "kicad-cli", "pcb", "export", "pos",
-        "--side", "both",
-        "--format", "csv",
-        "--units", "mm",
-        "-o", cpl_path,
-        PCB_FILE
+        "kicad-cli",
+        "pcb",
+        "export",
+        "pos",
+        "--side",
+        "both",
+        "--format",
+        "csv",
+        "--units",
+        "mm",
+        "-o",
+        cpl_path,
+        PCB_FILE,
     ]
     subprocess.run(cmd, check=True)
     print(f"    Saved centroid pick-and-place data to {cpl_path}.")
@@ -201,15 +217,11 @@ def export_bom():
     for item in footprints:
         key = (item["val"], item["fp"])
         if key not in groups:
-            groups[key] = {
-                "val": item["val"],
-                "fp": item["fp"],
-                "refs": []
-            }
+            groups[key] = {"val": item["val"], "fp": item["fp"], "refs": []}
         groups[key]["refs"].append(item["ref"])
 
     def natural_sort_key(s):
-        return [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', s)]
+        return [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", s)]
 
     rows = []
     for (val, fp), data in groups.items():
@@ -220,49 +232,80 @@ def export_bom():
         # Lookup in BOM database
         entry = BOM_DATABASE.get(val, {})
         if not entry:
-            # Check prefix / passive patterns
-            if val.endswith("uF") or val.endswith("nF") or val.endswith("pF"):
+            if refs[0].startswith("SW"):
+                if "PTS645" in fp:
+                    entry = {
+                        "mfr": "C&K / Omron",
+                        "mpn": "PTS645SM43SMTR92 LFS",
+                        "desc": "Tactile Switch SPST 6.0x6.0mm SMD 4.3mm Actuator (D-Pad & Action)",
+                        "package": fp.split(":")[-1],
+                    }
+                elif "PTS636" in fp:
+                    entry = {
+                        "mfr": "C&K Components",
+                        "mpn": "PTS636 SM25 LFS",
+                        "desc": "Tactile Switch SPST-NO 6.0x3.5mm SMD 2.5mm Actuator (Select/Start/Boot/Reset)",
+                        "package": fp.split(":")[-1],
+                    }
+                elif "B3U" in fp:
+                    entry = {
+                        "mfr": "Omron Electronics",
+                        "mpn": "B3U-3000P",
+                        "desc": "Ultra-Small Tactile Switch SPST-NO SMD 3.0x2.5x1.2mm (Shoulder Triggers)",
+                        "package": fp.split(":")[-1],
+                    }
+                else:
+                    entry = {
+                        "mfr": "C&K / Korean Hroparts",
+                        "mpn": "SS-12D00G3 / MSK-12C02",
+                        "desc": "SPDT Slide Switch Right Angle Through-Hole, Power On/Off",
+                        "package": fp.split(":")[-1],
+                    }
+            elif refs[0].startswith("C") or val.endswith(("uF", "nF", "pF")):
                 entry = {
                     "mfr": "Yageo / Murata / Samsung",
                     "mpn": f"Generic MLCC {val} 16V-50V X5R/X7R",
                     "desc": f"Capacitor Ceramic SMD {val} +/-10%",
-                    "package": fp.split(":")[-1]
+                    "package": fp.split(":")[-1],
                 }
-            elif "k" in val or val.isdigit() or "R" in val or "Ohm" in val:
+            elif refs[0].startswith("R"):
                 entry = {
                     "mfr": "Yageo / Vishay / Panasonic",
                     "mpn": f"Generic Resistor {val} 1% 1/10W",
                     "desc": f"Thick Film Chip Resistor {val} 1%",
-                    "package": fp.split(":")[-1]
-                }
-            elif val in ["UP", "DOWN", "LEFT", "RIGHT", "A", "B", "X", "Y", "START", "SELECT", "L1", "L2", "R1", "R2", "RESET", "BOOT", "SW_Push"]:
-                entry = {
-                    "mfr": "C&K / Omron",
-                    "mpn": "PTS645SM43SMTR92 LFS",
-                    "desc": "Tactile Switch SPST 6x6mm SMD 4.3mm Actuator Height",
-                    "package": "SW_SPST_PTS645"
+                    "package": fp.split(":")[-1],
                 }
             else:
                 entry = {
                     "mfr": "Standard",
                     "mpn": val,
                     "desc": val,
-                    "package": fp.split(":")[-1]
+                    "package": fp.split(":")[-1],
                 }
 
-        rows.append({
-            "Designator": ref_str,
-            "Quantity": qty,
-            "Value": val,
-            "Footprint": fp.split(":")[-1],
-            "Manufacturer": entry.get("mfr", "Generic"),
-            "MPN": entry.get("mpn", val),
-            "Description": entry.get("desc", val)
-        })
+        rows.append(
+            {
+                "Designator": ref_str,
+                "Quantity": qty,
+                "Value": val,
+                "Footprint": fp.split(":")[-1],
+                "Manufacturer": entry.get("mfr", "Generic"),
+                "MPN": entry.get("mpn", val),
+                "Description": entry.get("desc", val),
+            }
+        )
 
     rows.sort(key=lambda r: natural_sort_key(r["Designator"].split(", ")[0]))
 
-    fieldnames = ["Designator", "Quantity", "Value", "Footprint", "Manufacturer", "MPN", "Description"]
+    fieldnames = [
+        "Designator",
+        "Quantity",
+        "Value",
+        "Footprint",
+        "Manufacturer",
+        "MPN",
+        "Description",
+    ]
     with open(bom_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -275,11 +318,7 @@ def export_d356():
     ensure_dirs()
     print("==> [6/8] Generating IPC-D-356 Electrical Test Netlist...")
     out_path = os.path.join(BUILD_DIR, f"{PROJECT_NAME}.d356")
-    cmd = [
-        "kicad-cli", "pcb", "export", "ipcd356",
-        "-o", out_path,
-        PCB_FILE
-    ]
+    cmd = ["kicad-cli", "pcb", "export", "ipcd356", "-o", out_path, PCB_FILE]
     subprocess.run(cmd, check=True)
     print(f"    Saved IPC-D-356 netlist to {out_path}.")
 
@@ -290,8 +329,23 @@ def export_pdf():
     sch_pdf = os.path.join(BUILD_DIR, f"{PROJECT_NAME}_Schematic.pdf")
     pcb_pdf = os.path.join(BUILD_DIR, f"{PROJECT_NAME}_PCB_Layers.pdf")
 
-    subprocess.run(["kicad-cli", "sch", "export", "pdf", "-o", sch_pdf, SCH_FILE], check=True)
-    subprocess.run(["kicad-cli", "pcb", "export", "pdf", "-l", "F.Cu,B.Cu,In1.Cu,In2.Cu,F.SilkS,B.SilkS,Edge.Cuts", "-o", pcb_pdf, PCB_FILE], check=True)
+    subprocess.run(
+        ["kicad-cli", "sch", "export", "pdf", "-o", sch_pdf, SCH_FILE], check=True
+    )
+    subprocess.run(
+        [
+            "kicad-cli",
+            "pcb",
+            "export",
+            "pdf",
+            "-l",
+            "F.Cu,B.Cu,In1.Cu,In2.Cu,F.SilkS,B.SilkS,Edge.Cuts",
+            "-o",
+            pcb_pdf,
+            PCB_FILE,
+        ],
+        check=True,
+    )
     print(f"    Saved {sch_pdf} and {pcb_pdf}.")
 
 
@@ -330,7 +384,9 @@ def export_spec():
 
 def package_release():
     ensure_dirs()
-    print(f"==> [8/8] Packaging Complete Lion Circuits Turnkey Release Bundle ({RELEASE_ZIP})...")
+    print(
+        f"==> [8/8] Packaging Complete Lion Circuits Turnkey Release Bundle ({RELEASE_ZIP})..."
+    )
     export_gerbers()
     export_drill()
     zip_gerbers()
@@ -342,27 +398,54 @@ def package_release():
 
     with zipfile.ZipFile(RELEASE_ZIP, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.write(GERBERS_ZIP, arcname=os.path.basename(GERBERS_ZIP))
-        for fname in ["cpl.csv", "bom.csv", f"{PROJECT_NAME}.d356", f"{PROJECT_NAME}_Schematic.pdf", f"{PROJECT_NAME}_PCB_Layers.pdf", "ORDER_SPEC.md"]:
+        for fname in [
+            "cpl.csv",
+            "bom.csv",
+            f"{PROJECT_NAME}.d356",
+            f"{PROJECT_NAME}_Schematic.pdf",
+            f"{PROJECT_NAME}_PCB_Layers.pdf",
+            "ORDER_SPEC.md",
+        ]:
             fpath = os.path.join(BUILD_DIR, fname)
             if os.path.exists(fpath):
                 zf.write(fpath, arcname=fname)
 
-    print(f"======================================================================")
+    print("======================================================================")
     print(f"RELEASE READY: {RELEASE_ZIP} ({os.path.getsize(RELEASE_ZIP) // 1024} KB)")
-    print(f"======================================================================")
+    print("======================================================================")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Export manufacturing release package for Lion Circuits")
+    parser = argparse.ArgumentParser(
+        description="Export manufacturing release package for Lion Circuits"
+    )
     parser.add_argument("--gerbers", action="store_true", help="Export RS-274X Gerbers")
-    parser.add_argument("--drill", action="store_true", help="Export NC Excellon drill files")
-    parser.add_argument("--zip-gerbers", action="store_true", help="Zip Gerbers and drills")
-    parser.add_argument("--cpl", action="store_true", help="Export pick-and-place centroid file")
-    parser.add_argument("--bom", action="store_true", help="Export structured Bill of Materials")
-    parser.add_argument("--d356", action="store_true", help="Export IPC-D-356 electrical test netlist")
-    parser.add_argument("--pdf", action="store_true", help="Export schematic and PCB layer PDFs")
-    parser.add_argument("--spec", action="store_true", help="Generate Lion Circuits ORDER_SPEC.md")
-    parser.add_argument("--all", action="store_true", help="Generate complete manufacturing release bundle")
+    parser.add_argument(
+        "--drill", action="store_true", help="Export NC Excellon drill files"
+    )
+    parser.add_argument(
+        "--zip-gerbers", action="store_true", help="Zip Gerbers and drills"
+    )
+    parser.add_argument(
+        "--cpl", action="store_true", help="Export pick-and-place centroid file"
+    )
+    parser.add_argument(
+        "--bom", action="store_true", help="Export structured Bill of Materials"
+    )
+    parser.add_argument(
+        "--d356", action="store_true", help="Export IPC-D-356 electrical test netlist"
+    )
+    parser.add_argument(
+        "--pdf", action="store_true", help="Export schematic and PCB layer PDFs"
+    )
+    parser.add_argument(
+        "--spec", action="store_true", help="Generate Lion Circuits ORDER_SPEC.md"
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Generate complete manufacturing release bundle",
+    )
 
     args = parser.parse_args()
 

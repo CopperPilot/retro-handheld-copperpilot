@@ -5,12 +5,12 @@ Generates front, rear, isometric, exploded views, and 24-frame rotating explosio
 """
 
 import os
-import imageio
+
 import matplotlib
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
 import trimesh
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(SCRIPT_DIR, "models")
@@ -38,7 +38,13 @@ def get_shaded_poly(mesh, hex_color, alpha=1.0, edge_color=None):
     colors = np.outer(intensity, base_rgb)
     if edge_color is None:
         edge_color = tuple(base_rgb * 0.65)
-    return Poly3DCollection(triangles, facecolors=colors, edgecolors=edge_color, linewidths=0.15, alpha=alpha)
+    return Poly3DCollection(
+        triangles,
+        facecolors=colors,
+        edgecolors=edge_color,
+        linewidths=0.15,
+        alpha=alpha,
+    )
 
 
 def save_fig(fig, filename):

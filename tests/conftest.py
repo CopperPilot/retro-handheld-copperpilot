@@ -9,6 +9,7 @@ import subprocess
 try:
     import pytest
 except ImportError:
+
     class _MockPytest:
         @staticmethod
         def fixture(*args, **kwargs):
@@ -296,18 +297,20 @@ class KiCadPCB:
 
     def _parse_zones(self):
         self.zones = []
-        for z in re.finditer(r'\(zone\b', self.content):
-            end = self.content.find('(filled_polygon', z.start())
+        for z in re.finditer(r"\(zone\b", self.content):
+            end = self.content.find("(filled_polygon", z.start())
             if end == -1 or end - z.start() > 1500:
                 end = z.start() + 1000
-            snippet = self.content[z.start():end]
-            net_m = re.search(r'\(net\s+(?:\d+\s+)?\"?([^\"]+)\"?\)', snippet)
-            layers_m = re.search(r'\(layers?\s+([^\)]+)\)', snippet)
+            snippet = self.content[z.start() : end]
+            net_m = re.search(r"\(net\s+(?:\d+\s+)?\"?([^\"]+)\"?\)", snippet)
+            layers_m = re.search(r"\(layers?\s+([^\)]+)\)", snippet)
             if net_m and layers_m:
-                self.zones.append({
-                    "net": net_m.group(1).strip(),
-                    "layers": layers_m.group(1).replace('"', '').split()
-                })
+                self.zones.append(
+                    {
+                        "net": net_m.group(1).strip(),
+                        "layers": layers_m.group(1).replace('"', "").split(),
+                    }
+                )
 
 
 class KiCadSCH:

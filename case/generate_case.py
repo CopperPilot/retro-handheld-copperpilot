@@ -6,8 +6,7 @@ Generates watertight STL models for Front Bezel, Rear Grooved Shell, Battery Hat
 
 import argparse
 import os
-import sys
-import numpy as np
+
 import trimesh
 from trimesh.creation import box, cylinder
 
@@ -109,7 +108,7 @@ def generate_all(output_dirs):
     for c in cutouts:
         try:
             front_shell = front_shell.difference(c)
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
     # Add 4 stepped alignment bosses (H1-H4) to the inner face
@@ -140,7 +139,9 @@ def generate_all(output_dirs):
     front_shell = trimesh.util.concatenate([front_shell] + bosses)
     for d in output_dirs:
         front_shell.export(os.path.join(d, "case_front_bezel.stl"))
-    print(f"Exported case_front_bezel.stl (vertices: {len(front_shell.vertices)}, faces: {len(front_shell.faces)})")
+    print(
+        f"Exported case_front_bezel.stl (vertices: {len(front_shell.vertices)}, faces: {len(front_shell.faces)})"
+    )
 
     # ==============================================================================
     # 2. REAR GROOVED SHELL (case_rear_grooved.stl)
@@ -184,12 +185,14 @@ def generate_all(output_dirs):
     for c in rear_cutouts:
         try:
             rear_shell = rear_shell.difference(c)
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
     for d in output_dirs:
         rear_shell.export(os.path.join(d, "case_rear_grooved.stl"))
-    print(f"Exported case_rear_grooved.stl (vertices: {len(rear_shell.vertices)}, faces: {len(rear_shell.faces)})")
+    print(
+        f"Exported case_rear_grooved.stl (vertices: {len(rear_shell.vertices)}, faces: {len(rear_shell.faces)})"
+    )
 
     # ==============================================================================
     # 3. REMOVABLE BATTERY DOOR (case_battery_door.stl)
@@ -209,7 +212,9 @@ def generate_all(output_dirs):
     door = trimesh.util.concatenate([door, lip, tongue] + ridges)
     for d in output_dirs:
         door.export(os.path.join(d, "case_battery_door.stl"))
-    print(f"Exported case_battery_door.stl (vertices: {len(door.vertices)}, faces: {len(door.faces)})")
+    print(
+        f"Exported case_battery_door.stl (vertices: {len(door.vertices)}, faces: {len(door.faces)})"
+    )
 
     # ==============================================================================
     # 4. GAMEPAD BUTTONS & SHOULDERS (buttons_dpad_abxy_sest_shoulders.stl)
@@ -259,7 +264,9 @@ def generate_all(output_dirs):
     buttons_mesh = trimesh.util.concatenate(buttons)
     for d in output_dirs:
         buttons_mesh.export(os.path.join(d, "buttons_dpad_abxy_sest_shoulders.stl"))
-    print(f"Exported buttons_dpad_abxy_sest_shoulders.stl (vertices: {len(buttons_mesh.vertices)}, faces: {len(buttons_mesh.faces)})")
+    print(
+        f"Exported buttons_dpad_abxy_sest_shoulders.stl (vertices: {len(buttons_mesh.vertices)}, faces: {len(buttons_mesh.faces)})"
+    )
 
     # ==============================================================================
     # 5. COMPLETE MATED CONSOLE ASSEMBLY (gkd_pixel_console_assembly.stl)
@@ -272,17 +279,27 @@ def generate_all(output_dirs):
     buttons_assembled = buttons_mesh.copy()
     buttons_assembled.apply_translation([0, 0, 2.0])
 
-    full_assembly = trimesh.util.concatenate([front_assembled, rear_assembled, door_assembled, buttons_assembled])
+    full_assembly = trimesh.util.concatenate(
+        [front_assembled, rear_assembled, door_assembled, buttons_assembled]
+    )
     for d in output_dirs:
         full_assembly.export(os.path.join(d, "gkd_pixel_console_assembly.stl"))
-    print(f"Exported gkd_pixel_console_assembly.stl (vertices: {len(full_assembly.vertices)}, faces: {len(full_assembly.faces)})")
+    print(
+        f"Exported gkd_pixel_console_assembly.stl (vertices: {len(full_assembly.vertices)}, faces: {len(full_assembly.faces)})"
+    )
 
     print("All STL assets successfully generated and verified!")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate 3D CAD meshes for GKD Pixel Enclosure")
-    parser.add_argument("--output-dir", default=DEFAULT_MODELS_DIR, help="Destination directory for STL models")
+    parser = argparse.ArgumentParser(
+        description="Generate 3D CAD meshes for GKD Pixel Enclosure"
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=DEFAULT_MODELS_DIR,
+        help="Destination directory for STL models",
+    )
     args = parser.parse_args()
 
     dirs = [args.output_dir]

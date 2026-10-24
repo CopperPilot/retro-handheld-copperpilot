@@ -1,8 +1,6 @@
 """Automated 25-point hardware verification test suite for GKD Pixel ESP32-S3 Handheld Console PCB."""
 
-import math
 import os
-import re
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -29,8 +27,12 @@ class TestBoardPhysical:
         width = max(xs) - min(xs)
         height = max(ys) - min(ys)
 
-        assert 62.5 <= width <= 63.5, f"Board width {width:.2f} mm out of range [62.5, 63.5]"
-        assert 79.5 <= height <= 80.5, f"Board height {height:.2f} mm out of range [79.5, 80.5]"
+        assert 62.5 <= width <= 63.5, (
+            f"Board width {width:.2f} mm out of range [62.5, 63.5]"
+        )
+        assert 79.5 <= height <= 80.5, (
+            f"Board height {height:.2f} mm out of range [79.5, 80.5]"
+        )
 
     def test_four_layer_stackup(self, pcb_data):
         """Assert standard Lion Circuits 4-layer copper stackup with 1.6 mm nominal thickness."""
@@ -38,7 +40,7 @@ class TestBoardPhysical:
         assert '"In1.Cu"' in pcb_data.content
         assert '"In2.Cu"' in pcb_data.content
         assert '"B.Cu"' in pcb_data.content
-        assert '(thickness 1.6)' in pcb_data.content or '1.6' in pcb_data.content
+        assert "(thickness 1.6)" in pcb_data.content or "1.6" in pcb_data.content
 
     def test_edge_cuts_closed_contour(self, pcb_data):
         """Assert Edge.Cuts contains perimeter elements defining outer profile and snap notches."""
@@ -53,7 +55,9 @@ class TestConnectivityAndNetlist:
     def test_drc_zero_unconnected_items(self, drc_results):
         """Assert kicad-cli pcb drc returns exactly 0 unconnected items (100% routed)."""
         unconnected = drc_results.get("unconnected_items", [])
-        assert len(unconnected) == 0, f"Found {len(unconnected)} unconnected items: {unconnected}"
+        assert len(unconnected) == 0, (
+            f"Found {len(unconnected)} unconnected items: {unconnected}"
+        )
 
     def test_drc_zero_errors(self, drc_results):
         """Assert kicad-cli pcb drc returns 0 violations with severity 'error'."""
@@ -66,7 +70,9 @@ class TestConnectivityAndNetlist:
         sheets = erc_results.get("sheets", [])
         all_errors = []
         for sheet in sheets:
-            errors = [v for v in sheet.get("violations", []) if v.get("severity") == "error"]
+            errors = [
+                v for v in sheet.get("violations", []) if v.get("severity") == "error"
+            ]
             all_errors.extend(errors)
         assert len(all_errors) == 0, f"Found {len(all_errors)} ERC errors: {all_errors}"
 
@@ -118,9 +124,13 @@ class TestConnectivityAndNetlist:
 
     def test_no_unassigned_vias(self, pcb_data):
         """Assert all vias are bound to active named nets."""
-        assert len(pcb_data.vias) >= 40, f"Expected >= 40 vias, got {len(pcb_data.vias)}"
+        assert len(pcb_data.vias) >= 40, (
+            f"Expected >= 40 vias, got {len(pcb_data.vias)}"
+        )
         for via in pcb_data.vias:
-            assert via["net_name"] != "", f"Unassigned via detected at ({via['x']}, {via['y']})"
+            assert via["net_name"] != "", (
+                f"Unassigned via detected at ({via['x']}, {via['y']})"
+            )
 
 
 class TestTraceGeometryAndDFM:
@@ -140,13 +150,17 @@ class TestTraceGeometryAndDFM:
             segs = [s for s in pcb_data.segments if s["net_name"] == net]
             assert len(segs) > 0, f"Net {net} missing routed segments"
             for s in segs:
-                assert s["width"] >= 0.150, f"Power net {net} has undersized segment: {s['width']} mm"
+                assert s["width"] >= 0.150, (
+                    f"Power net {net} has undersized segment: {s['width']} mm"
+                )
 
     def test_via_drill_and_annular_ring(self, pcb_data):
         """Assert via drill >= 0.30 mm, diameter >= 0.60 mm, annular ring >= 0.15 mm."""
         for via in pcb_data.vias:
             assert via["drill"] >= 0.295, f"Via drill {via['drill']} mm < 0.30 mm limit"
-            assert via["size"] >= 0.595, f"Via diameter {via['size']} mm < 0.60 mm limit"
+            assert via["size"] >= 0.595, (
+                f"Via diameter {via['size']} mm < 0.60 mm limit"
+            )
             assert via["annular_ring"] >= 0.145, (
                 f"Via annular ring {via['annular_ring']} mm < 0.15 mm Lion Circuits limit"
             )
@@ -154,7 +168,8 @@ class TestTraceGeometryAndDFM:
     def test_zero_clearance_errors(self, drc_results):
         """Assert zero clearance violations reported by DRC engine."""
         clearance_errors = [
-            v for v in drc_results.get("violations", [])
+            v
+            for v in drc_results.get("violations", [])
             if "clearance" in v.get("type", "").lower() and v.get("severity") == "error"
         ]
         assert len(clearance_errors) == 0, f"Found clearance errors: {clearance_errors}"
@@ -238,7 +253,9 @@ class Test3DModelsAndSilkscreen:
         for ref, fp in pcb_data.footprints.items():
             if len(fp["models"]) == 0:
                 missing_models.append(ref)
-        assert len(missing_models) == 0, f"Footprints missing 3D models: {missing_models}"
+        assert len(missing_models) == 0, (
+            f"Footprints missing 3D models: {missing_models}"
+        )
 
     def test_no_legacy_kicad_env_vars(self, pcb_data):
         """Assert no deprecated KICAD6_* or KICAD7_* environment variables remain."""
@@ -252,4 +269,6 @@ class Test3DModelsAndSilkscreen:
             fp = pcb_data.footprints.get(ref)
             assert fp is not None, f"Component {ref} not found"
             pad_nums = {p["number"] for p in fp["pads"]}
-            assert "1" in pad_nums or "A1" in pad_nums, f"Component {ref} missing Pin 1 pad"
+            assert "1" in pad_nums or "A1" in pad_nums, (
+                f"Component {ref} missing Pin 1 pad"
+            )
