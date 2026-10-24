@@ -6,7 +6,7 @@
 
 (property "Value" "ILI9341_TFT_2.4in" (at 0 0 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)))) 
 
-(property "Footprint" "gameboy_handheld:ILI9341_TFT_2.4in_10P" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes) (effects (font (size 1.27 1.27)))) 
+(property "Footprint" "copperpilot_retro_handheld:ILI9341_TFT_2.4in_10P" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes) (effects (font (size 1.27 1.27)))) 
 
 (property "Datasheet" "https://cdn-shop.adafruit.com/datasheets/ILI9341.pdf" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes) (effects (font (size 1.27 1.27)))) 
 

@@ -2,7 +2,7 @@
 End-to-End Assembly & Volumetric Clearances Verification Test Suite for GKD Pixel Handheld Console.
 Validates the complete physical assembly sequence and kinematics across all 6 subsystems:
   Stage 1: Bare PCB -> SMT/TH PCBA Component Loading (74 components)
-  Stage 2: KiCad 3D Exported Mesh Verification (gameboy_pcb_populated.stl & .glb)
+  Stage 2: KiCad 3D Exported Mesh Verification (copperpilot_retro_handheld_pcb_populated.stl & .glb)
   Stage 3: Gamepad Buttons Clearance & Zero Self-Collision Analysis
   Stage 4: Front Bezel -> Floating Keypad & Shoulder Buttons Seating (Zero Collision)
   Stage 5: Front Bezel -> 2.4-inch SPI TFT Display Module Seating & J3 Interconnect
@@ -29,7 +29,7 @@ except ImportError:
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 CASE_DIR = os.path.join(ROOT_DIR, "case")
 MODELS_DIR = os.path.join(CASE_DIR, "models")
-PCB_FILE = os.path.join(ROOT_DIR, "gameboy-copperpilot.kicad_pcb")
+PCB_FILE = os.path.join(ROOT_DIR, "copperpilot-retro-handheld.kicad_pcb")
 
 
 @pytest.fixture(scope="module")
@@ -71,7 +71,7 @@ def case_meshes():
         pytest.skip("trimesh not installed")
 
     # Load PCB STL and transform into Case centered coordinate frame
-    pcb_stl_path = os.path.join(MODELS_DIR, "gameboy_pcb_populated.stl")
+    pcb_stl_path = os.path.join(MODELS_DIR, "copperpilot_retro_handheld_pcb_populated.stl")
     pcb = trimesh.load(pcb_stl_path)
     # KiCad STL X: [0, 63], Y: [-80, 0] -> Case X: [-31.5, 31.5], Y: [-40, 40]
     pcb.apply_translation([-31.5, 40.0, 0.0])

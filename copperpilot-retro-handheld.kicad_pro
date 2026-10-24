@@ -309,7 +309,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "gameboy-copperpilot.kicad_pro",
+    "filename": "copperpilot-retro-handheld.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -357,8 +357,8 @@
     "legacy_lib_list": [],
     "top_level_sheets": [
       {
-        "filename": "gameboy-copperpilot.kicad_sch",
-        "name": "gameboy-copperpilot",
+        "filename": "copperpilot-retro-handheld.kicad_sch",
+        "name": "copperpilot-retro-handheld",
         "uuid": "00000000-0000-0000-0000-000000000000"
       }
     ]

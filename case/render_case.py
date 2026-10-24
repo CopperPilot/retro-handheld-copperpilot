@@ -41,10 +41,10 @@ def build_scene_assets():
     )
 
     # 1. Genuine KiCad 3D PCBA with full realistic colors & materials
-    glb_path = os.path.join(MODELS_DIR, "gameboy_pcb_populated.glb")
+    glb_path = os.path.join(MODELS_DIR, "copperpilot_retro_handheld_pcb_populated.glb")
     if not os.path.exists(glb_path):
         # Generate on the fly using kicad-cli if missing
-        pcb_file = os.path.join(ROOT_DIR, "gameboy-copperpilot.kicad_pcb")
+        pcb_file = os.path.join(ROOT_DIR, "copperpilot-retro-handheld.kicad_pcb")
         subprocess.run(["kicad-cli", "pcb", "export", "glb", "--output", glb_path, "--force", pcb_file], check=True)
 
     scene = trimesh.load(glb_path)

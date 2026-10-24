@@ -1,8 +1,8 @@
 # GKD Pixel Style Handheld Gaming Console: 4-Layer ESP32-S3 Hardware
 
-[![KiCad EDA](https://img.shields.io/badge/KiCad-v10.0.4-brightgreen.svg)](gameboy-copperpilot.kicad_pro)
-[![DRC Status](https://img.shields.io/badge/DRC-Zero%20Errors%20%7C%20100%25%20Routed-brightgreen.svg)](gameboy-copperpilot.kicad_pcb)
-[![ERC Status](https://img.shields.io/badge/ERC-Zero%20Errors-brightgreen.svg)](gameboy-copperpilot.kicad_sch)
+[![KiCad EDA](https://img.shields.io/badge/KiCad-v10.0.4-brightgreen.svg)](copperpilot-retro-handheld.kicad_pro)
+[![DRC Status](https://img.shields.io/badge/DRC-Zero%20Errors%20%7C%20100%25%20Routed-brightgreen.svg)](copperpilot-retro-handheld.kicad_pcb)
+[![ERC Status](https://img.shields.io/badge/ERC-Zero%20Errors-brightgreen.svg)](copperpilot-retro-handheld.kicad_sch)
 [![Lion Circuits Turnkey](https://img.shields.io/badge/Fab-Lion%20Circuits%204--Layer-orange.svg)](#lion-circuits-4-layer-manufacturing--pcba-specifications)
 [![3D Enclosure](https://img.shields.io/badge/Case-Watertight%20Snap--Fit%20STLs-blue.svg)](case/)
 [![Automated Tests](https://img.shields.io/badge/Tests-50%2F50%20Passed-success.svg)](tests/)
@@ -107,7 +107,7 @@ An ultra-compact, high-performance, single-board retro handheld gaming console b
     - Full double-buffered RGB565 framebuffer ($320 \times 240 \times 2 = 150\text{ KB}$ per buffer, $300\text{ KB}$ total) occupies only 15% of the 2 MB PSRAM.
     - At 80 MHz SPI clock, frame delivery takes only $15.36\text{ ms}$, delivering a rock-solid **65.1 FPS** asynchronously via DMA.
     - Native 2D game engines (Snake, Bomberman, Pac-Man, Tetris) require $<8\%$ CPU load on Core 0; Core 1 remains free for wireless multiplayer or background tasks.
-    - Emulators (Peanut-GB, gnuboy) achieve 100% full-speed **60 FPS** Game Boy / Game Boy Color emulation at ~25% CPU utilization.
+    - Emulators (Peanut-GB, gnuboy) achieve 100% full-speed **60 FPS** classic 8-bit handheld emulation at ~25% CPU utilization.
     - *Audio note*: The board does not integrate an analog audio amplifier or speaker. Audio is supported wirelessly via Bluetooth 5.0 LE / A2DP or via external PWM buzzer on spare GPIO.
 - **Display Subsystem & Connector `J3`**:
   - **Board-Mounted SMT Socket (`J3`)**: JST Sales America `SM10B-GHS-TB(LF)(SN)` (10-position 1.25 mm pitch horizontal SMD header with solder retention tabs).
@@ -255,14 +255,14 @@ tests/test_pcb.py::Test3DModelsAndSilkscreen::test_pin1_polarity_indicators PASS
 ├── LICENSE                             # CERN Open Hardware Licence v2 - Permissive
 ├── README.md                           # Master hardware, pinout, and manufacturing documentation
 ├── export_manufacturing.py             # Lion Circuits release generator (Gerbers, CPL, BOM, D356)
-├── gameboy-copperpilot.kicad_pro       # KiCad 10 project definition & netclass rules
-├── gameboy-copperpilot.kicad_sch       # Hierarchical schematic capture (0 ERC errors)
-├── gameboy-copperpilot.kicad_pcb       # 4-layer PCB layout (100% routed, 0 DRC violations)
+├── copperpilot-retro-handheld.kicad_pro       # KiCad 10 project definition & netclass rules
+├── copperpilot-retro-handheld.kicad_sch       # Hierarchical schematic capture (0 ERC errors)
+├── copperpilot-retro-handheld.kicad_pcb       # 4-layer PCB layout (100% routed, 0 DRC violations)
 ├── sym-lib-table                       # Symbol library mapping
 ├── fp-lib-table                        # Footprint library mapping
 ├── libs/                               # Custom symbols and footprints
-│   ├── gameboy_handheld.kicad_sym      # Custom ILI9341 2.4" TFT display symbol
-│   └── gameboy_handheld.pretty/        # Custom 10-pin display footprint & 3D model
+│   ├── copperpilot_retro_handheld.kicad_sym      # Custom ILI9341 2.4" TFT display symbol
+│   └── copperpilot_retro_handheld.pretty/        # Custom 10-pin display footprint & 3D model
 ├── tests/                              # Automated 51-point hardware & assembly verification suite
 │   ├── conftest.py                     # S-expression AST parsers & KiCad CLI fixtures
 │   ├── test_assembly_e2e.py            # 11-stage end-to-end mechanical assembly verification
@@ -301,10 +301,10 @@ Ensure `kicad-cli` (v10.0+) and Python 3.10+ (with `uv`) are available in your p
 /home/aditya/.local/bin/uv run pytest -v
 
 # Run electrical rule check (ERC) via KiCad CLI
-kicad-cli sch erc gameboy-copperpilot.kicad_sch
+kicad-cli sch erc copperpilot-retro-handheld.kicad_sch
 
 # Run design rule check (DRC) via KiCad CLI
-kicad-cli pcb drc gameboy-copperpilot.kicad_pcb
+kicad-cli pcb drc copperpilot-retro-handheld.kicad_pcb
 ```
 
 ### 2. Generate 3D CAD Enclosure STLs and Visuals

@@ -22,9 +22,9 @@ except ImportError:
     pytest = _MockPytest()
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-PCB_FILE = os.path.join(ROOT_DIR, "gameboy-copperpilot.kicad_pcb")
-SCH_FILE = os.path.join(ROOT_DIR, "gameboy-copperpilot.kicad_sch")
-PRO_FILE = os.path.join(ROOT_DIR, "gameboy-copperpilot.kicad_pro")
+PCB_FILE = os.path.join(ROOT_DIR, "copperpilot-retro-handheld.kicad_pcb")
+SCH_FILE = os.path.join(ROOT_DIR, "copperpilot-retro-handheld.kicad_sch")
+PRO_FILE = os.path.join(ROOT_DIR, "copperpilot-retro-handheld.kicad_pro")
 
 
 class KiCadPCB:

@@ -11,7 +11,7 @@ import re
 import subprocess
 import zipfile
 
-PROJECT_NAME = "gameboy-copperpilot"
+PROJECT_NAME = "copperpilot-retro-handheld"
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 PCB_FILE = os.path.join(ROOT_DIR, f"{PROJECT_NAME}.kicad_pcb")
 SCH_FILE = os.path.join(ROOT_DIR, f"{PROJECT_NAME}.kicad_sch")
@@ -390,7 +390,7 @@ def export_spec():
     content = """# Lion Circuits Turnkey PCB Fabrication & PCBA Assembly Specification
 
 ## 1. PCB Board Fabrication Parameters
-- **Project Name**: GKD Pixel ESP32-S3 Handheld Gaming Console (`gameboy-copperpilot`)
+- **Project Name**: GKD Pixel ESP32-S3 Handheld Gaming Console (`copperpilot-retro-handheld`)
 - **Dimensions**: 63.00 mm x 80.00 mm (Finished unit with R=2.5mm corner radii)
 - **Panelization Strategy**: 63.00 mm x 105.00 mm Carrier Panel (with 2x 12.5mm breakaway tooling rails on 63mm edges, exceeding Lion Circuits 50x100mm conveyor minimum)
 - **Layer Count**: 4-Layer FR-4 (TG140-150)

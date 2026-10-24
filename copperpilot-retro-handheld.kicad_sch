@@ -3381,13 +3381,13 @@
 					)
 					(embedded_fonts no)
 				)
-		(symbol "gameboy_handheld:ILI9341_TFT_2.4in" (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (duplicate_pin_numbers_are_jumpers no) 
+		(symbol "copperpilot_retro_handheld:ILI9341_TFT_2.4in" (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (duplicate_pin_numbers_are_jumpers no) 
 		
 		(property "Reference" "J" (at 0 0 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)))) 
 		
 		(property "Value" "ILI9341_TFT_2.4in" (at 0 0 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)))) 
 		
-		(property "Footprint" "gameboy_handheld:ILI9341_TFT_2.4in_10P" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes) (effects (font (size 1.27 1.27)))) 
+		(property "Footprint" "copperpilot_retro_handheld:ILI9341_TFT_2.4in_10P" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes) (effects (font (size 1.27 1.27)))) 
 		
 		(property "Datasheet" "https://cdn-shop.adafruit.com/datasheets/ILI9341.pdf" (at 0 0 0) (show_name no) (do_not_autoplace no) (hide yes) (effects (font (size 1.27 1.27)))) 
 		
@@ -10332,7 +10332,7 @@
 		(pin "1" (uuid "f229b70b-db2f-4644-bf3c-678f563cae81"))
 	)
 	(symbol
-		(lib_id "gameboy_handheld:ILI9341_TFT_2.4in")
+		(lib_id "copperpilot_retro_handheld:ILI9341_TFT_2.4in")
 		(at 335.28 63.5 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -10351,7 +10351,7 @@
 			(effects (font (size 1.27 1.27)))
 		)
 		(property "Footprint"
-			"gameboy_handheld:ILI9341_TFT_2.4in_10P"
+			"copperpilot_retro_handheld:ILI9341_TFT_2.4in_10P"
 			(at 335.28 63.5 0)
 			(hide yes)
 			(effects (font (size 1.27 1.27)))
