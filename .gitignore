@@ -1,0 +1,66 @@
+# ==============================================================================
+# GKD Pixel ESP32-S3 Handheld Console - Git Ignore Specification
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# KiCad EDA & Hardware Artifacts
+# ------------------------------------------------------------------------------
+*.kicad_prl
+*.bak
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*-backups/
+_autosave-*
+~*.lck
+fp-info-cache
+*.net
+*.dsn
+*.ses
+*.cad
+*.xml
+*.json
+*.rpt
+
+# Build & Fabrication Releases
+build/
+fab/
+manufacturing/
+*.zip
+*.gbrjob
+
+# ------------------------------------------------------------------------------
+# Python & Testing Caches
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+venv/
+.venv/
+ENV/
+env/
+
+# ------------------------------------------------------------------------------
+# Operating System & Editor Metadata
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# ------------------------------------------------------------------------------
+# CopperPilot Internal Metadata & AI Tooling
+# ------------------------------------------------------------------------------
+.copperpilot/
+.copperpilot
+.copperpilot*
