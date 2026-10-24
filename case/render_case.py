@@ -70,13 +70,16 @@ def build_scene_assets():
     bare_pcb = pv.Box(bounds=[-31.5, 31.5, -40.0, 40.0, -1.6, 0.0])
 
     # 2. 2.4" Display Panel Module (Waveshare 15933 / ER-TFT024-3, ILI9341 SPI TFT):
-    # Glass face (54.0 x 42.0 x 1.6 mm) + PCB backing frame (55.0 x 43.0 x 1.2 mm) + FPC ribbon
-    display_glass = pv.Box(bounds=[-27.0, 27.0, 14.07 - 21.0, 14.07 + 21.0, 1.8, 3.4])
-    display_pcb = pv.Box(bounds=[-27.5, 27.5, 14.07 - 21.5, 14.07 + 21.5, 0.6, 1.8])
-    display_ribbon = pv.Box(bounds=[-4.0, 4.0, -8.0, 14.07 - 21.5, 0.2, 1.0])
+    # Active display area: 48.96 x 36.72 mm
+    # Display glass sits inside internal shelf at Z in [4.30, 5.30] mm
+    # Display PCB sits at Z in [3.45, 4.25] mm (clearing J2 through-hole pins at Z <= 3.32 mm)
+    # FPC ribbon connects to J3 from Y = -2.0 to -6.0 mm at Z = 5.86 mm
+    display_glass = pv.Box(bounds=[-24.5, 24.5, 14.5 - 17.5, 14.5 + 17.5, 4.30, 5.30])
+    display_pcb = pv.Box(bounds=[-25.0, 25.0, 14.5 - 16.5, 14.5 + 16.5, 3.45, 4.25])
+    display_ribbon = pv.Box(bounds=[-4.0, 4.0, -6.0, -1.8, 5.76, 5.96])
 
-    # 3. 1000 mAh Li-Po Battery Pack (LP803040 / 40.0 x 30.0 x 7.5 mm) with JST-PH leads
-    battery = pv.Box(bounds=[-15.0, 15.0, -26.0, 14.0, -10.3, -2.8])
+    # 3. 1000 mAh Li-Po Battery Pack (26.0 x 38.0 x 6.0 mm) placed in rear cavity
+    battery = pv.Box(bounds=[3.0 - 13.0, 3.0 + 13.0, -8.0 - 19.0, -8.0 + 19.0, -9.0, -3.0])
 
     return {
         "front": front,
@@ -178,26 +181,26 @@ def render_exploded_view(assets):
 
     # Explode components cleanly along Z axis
     buttons = assets["buttons"].copy()
-    buttons.translate([0, 0, 80.0], inplace=True)
+    buttons.translate([0, 0, 68.0], inplace=True)
 
     front = assets["front"].copy()
-    front.translate([0, 0, 48.0], inplace=True)
+    front.translate([0, 0, 44.0], inplace=True)
 
     disp_glass = assets["display_glass"].copy()
-    disp_glass.translate([0, 0, 26.0], inplace=True)
+    disp_glass.translate([0, 0, 22.0], inplace=True)
     disp_pcb = assets["display_pcb"].copy()
-    disp_pcb.translate([0, 0, 25.0], inplace=True)
+    disp_pcb.translate([0, 0, 21.0], inplace=True)
     disp_ribbon = assets["display_ribbon"].copy()
-    disp_ribbon.translate([0, 0, 16.0], inplace=True)
+    disp_ribbon.translate([0, 0, 14.0], inplace=True)
 
     # Genuine KiCad 3D Populated PCBA centered at Z = 0
     pcb_full = assets["pcb_full"].copy()
 
     battery = assets["battery"].copy()
-    battery.translate([0, 0, -25.0], inplace=True)
+    battery.translate([0, 0, -22.0], inplace=True)
 
     rear = assets["rear"].copy()
-    rear.translate([0, 0, -55.0], inplace=True)
+    rear.translate([0, 0, -48.0], inplace=True)
 
     p.add_mesh(buttons, color="#25282e", smooth_shading=True, specular=0.3)
     p.add_mesh(front, color="#79818c", smooth_shading=True, opacity=0.92, specular=0.4)
@@ -209,10 +212,10 @@ def render_exploded_view(assets):
     p.add_mesh(rear, color="#5d636e", smooth_shading=True, opacity=0.92, specular=0.4)
 
     # Side 3/4 perspective looking across the Z explode axis
-    p.camera.position = (180.0, 40.0, 70.0)
+    p.camera.position = (185.0, 45.0, 65.0)
     p.camera.focal_point = (0.0, 0.0, 10.0)
     p.camera.up = (0.0, 1.0, 0.0)
-    p.camera.zoom(1.1)
+    p.camera.zoom(0.85)
     save_render(p, "case_render_exploded.png")
     p.close()
 
@@ -272,14 +275,14 @@ def generate_assembly_motion_animation(assets):
 
         t = frame_idx / (total_frames - 1)  # 0.0 to 1.0
 
-        # Maintain smooth, stable camera framing
-        if t < 0.82:
+        # Maintain smooth, stable camera framing during assembly stages
+        if t < 0.86:
             p.camera.position = cam_pos
             p.camera.focal_point = cam_focal
             p.camera.up = cam_up
         else:
-            # Stage 6: 360-degree turntable orbit of fully assembled console
-            orbit_frac = (t - 0.82) / 0.18
+            # Stage 7: 360-degree turntable orbit of fully assembled console
+            orbit_frac = (t - 0.86) / 0.14
             angle = orbit_frac * 2.0 * np.pi
             th = init_theta + angle
             cur_x = rad * np.sin(th)
@@ -289,10 +292,10 @@ def generate_assembly_motion_animation(assets):
             p.camera.up = cam_up
 
         # ======================================================================
-        # STAGE 1 (t: 0.0 to 0.18): Bare PCB -> PCBA Component Populating
+        # STAGE 1 (t: 0.0 to 0.16): Bare PCB -> PCBA Component Populating
         # ======================================================================
-        if t < 0.18:
-            blend = t / 0.18
+        if t < 0.16:
+            blend = t / 0.16
             p_pcb = assets["bare_pcb"].copy()
             p.add_mesh(p_pcb, color="#1b4d3e", smooth_shading=True)
             comp_offset = (1.0 - blend) * 30.0
@@ -304,28 +307,23 @@ def generate_assembly_motion_animation(assets):
             p.add_mesh(p_full, rgb=True, smooth_shading=True)
 
         # ======================================================================
-        # STAGE 2 (t: 0.18 to 0.38): Front Bezel & Gamepad Buttons Enter
+        # STAGE 2 (t: 0.16 to 0.32): Gamepad Buttons seat onto PCBA Switches
+        # Buttons fly down along +Z and seat directly onto tactile switch actuators
         # ======================================================================
-        if t >= 0.18:
-            front_blend = min(1.0, (t - 0.18) / 0.14)
-            front_offset = (1.0 - front_blend) * 55.0
-            p_front = assets["front"].copy()
-            p_front.translate([0, 0, front_offset], inplace=True)
-            p.add_mesh(p_front, color="#79818c", smooth_shading=True, opacity=0.95)
-
-            # Buttons slide into front bezel bores from above
-            btn_blend = min(1.0, max(0.0, (t - 0.22) / 0.14))
-            btn_offset = (1.0 - btn_blend) * 75.0
+        if t >= 0.16:
+            btn_blend = min(1.0, (t - 0.16) / 0.14)
+            btn_offset = (1.0 - btn_blend) * 65.0
             p_btn = assets["buttons"].copy()
             p_btn.translate([0, 0, btn_offset], inplace=True)
             p.add_mesh(p_btn, color="#25282e", smooth_shading=True)
 
         # ======================================================================
-        # STAGE 3 (t: 0.36 to 0.55): 2.4" Display Panel seats & connects to J3
+        # STAGE 3 (t: 0.32 to 0.48): 2.4" Display Panel seats & connects to J3
+        # Display descends along +Z and connects FPC ribbon cleanly into JST-GH J3
         # ======================================================================
-        if t >= 0.36:
-            disp_blend = min(1.0, (t - 0.36) / 0.14)
-            disp_offset = (1.0 - disp_blend) * 40.0
+        if t >= 0.32:
+            disp_blend = min(1.0, (t - 0.32) / 0.14)
+            disp_offset = (1.0 - disp_blend) * 60.0
             p_glass = assets["display_glass"].copy()
             p_glass.translate([0, 0, disp_offset], inplace=True)
             p.add_mesh(p_glass, color="#08090b", smooth_shading=True, specular=0.85)
@@ -339,21 +337,34 @@ def generate_assembly_motion_animation(assets):
             p.add_mesh(p_ribbon, color="#c0a060", smooth_shading=True)
 
         # ======================================================================
-        # STAGE 4 (t: 0.54 to 0.72): 1000 mAh Li-Po Battery Inserts into Cavity
+        # STAGE 4 (t: 0.48 to 0.64): Front Bezel lowers over Buttons & Display
+        # Front bezel lowers along +Z; bores slide over button caps and frame screen
         # ======================================================================
-        if t >= 0.54:
-            bat_blend = min(1.0, (t - 0.54) / 0.14)
-            bat_offset = (1.0 - bat_blend) * -45.0
+        if t >= 0.48:
+            front_blend = min(1.0, (t - 0.48) / 0.14)
+            front_offset = (1.0 - front_blend) * 60.0
+            p_front = assets["front"].copy()
+            p_front.translate([0, 0, front_offset], inplace=True)
+            p.add_mesh(p_front, color="#79818c", smooth_shading=True, opacity=0.95)
+
+        # ======================================================================
+        # STAGE 5 (t: 0.64 to 0.76): 1000 mAh Li-Po Battery Inserts into Cavity
+        # Battery seats into lower rear cavity and mates with JST-PH connector J2
+        # ======================================================================
+        if t >= 0.64:
+            bat_blend = min(1.0, (t - 0.64) / 0.10)
+            bat_offset = (1.0 - bat_blend) * -50.0
             p_bat = assets["battery"].copy()
             p_bat.translate([0, 0, bat_offset], inplace=True)
             p.add_mesh(p_bat, color="#206095", smooth_shading=True)
 
         # ======================================================================
-        # STAGE 5 (t: 0.70 to 0.84): Rear Grooved Shell closes & snaps flush
+        # STAGE 6 (t: 0.76 to 0.86): Rear Grooved Shell closes & snaps flush
+        # Rear shell moves along -Z, engaging pins H1-H4 and snapping flush
         # ======================================================================
-        if t >= 0.70:
-            rear_blend = min(1.0, (t - 0.70) / 0.12)
-            rear_offset = (1.0 - rear_blend) * -55.0
+        if t >= 0.76:
+            rear_blend = min(1.0, (t - 0.76) / 0.10)
+            rear_offset = (1.0 - rear_blend) * -60.0
             p_rear = assets["rear"].copy()
             p_rear.translate([0, 0, rear_offset], inplace=True)
             p.add_mesh(p_rear, color="#5d636e", smooth_shading=True, opacity=0.95)

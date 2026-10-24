@@ -30,7 +30,7 @@ An ultra-compact, high-performance, single-board retro handheld gaming console b
 <p align="center">
   <img src="docs/images/case_explosion_animation.gif" alt="3D Assembly Sequence Animation" width="560">
   <br>
-  <em>Sequential 3D Assembly Animation: PCBA Component Loading &rarr; Floating Keycaps Placement &rarr; 2.4" Display Panel Seating &rarr; PCBA Boss Alignment &rarr; Rear Shell Snap Lock &rarr; Li-Po Battery Insertion &amp; Hatch Closure</em>
+  <em>Sequential 3D Assembly Animation: PCBA SMT/TH Component Populating &rarr; Gamepad Keycaps Seating over Tactile Switches &rarr; 2.4" Display Panel Seating &amp; FPC Interconnect into J3 &rarr; Front Bezel Lowering over Controls &amp; Alignment Pins &rarr; Li-Po Battery Seating into Rear Cavity &rarr; Rear Grooved Shell Closing &amp; Flush Snap Mating &rarr; 360&deg; Watertight Turntable Inspection</em>
   <br>
   <strong>High-definition MP4 video asset:</strong> <code>docs/images/case_assembly_video.mp4</code>
 </p>
@@ -181,21 +181,25 @@ The hardware has been validated against Lion Circuits India turnkey PCBA design 
 
 ## Automated Verification Suite
 
-The repository includes a **47-point automated PyTest hardware, assembly, and enclosure verification suite**:
+The repository includes a **51-point automated PyTest hardware, assembly, and enclosure verification suite**:
 
 ```bash
 $ /home/aditya/.local/bin/uv run pytest -v
 ============================= test session starts ==============================
 platform linux -- Python 3.13.9, pytest-9.1.1
-collected 47 items
+collected 51 items
 
 tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage1_pcba_component_loading PASSED
-tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage2_buttons_seated_in_front_bezel PASSED
-tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage3_display_fits_front_bezel_shelf PASSED
-tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage4_pcb_mating_and_alignment_bosses PASSED
-tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage5_rear_shell_cavity_and_snap_locking PASSED
-tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage6_battery_insertion_and_door_closure PASSED
-tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage7_full_system_envelope_and_watertightness PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage2_kicad_3d_pcba_mesh_validation PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage3_buttons_clearance_and_zero_collision PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage4_buttons_seat_onto_pcba_zero_collision PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage5_buttons_seat_in_front_bezel_zero_collision PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage6_display_shelf_mating_and_j3_interconnect PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage7_pcba_mating_to_front_bezel_zero_collision PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage8_rear_shell_mating_over_pcb_zero_collision PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage9_battery_seating_and_rear_cavity_fit PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage10_continuous_kinematic_assembly_trajectories PASSED
+tests/test_assembly_e2e.py::TestEndToEndAssemblySequence::test_stage11_full_console_assembly_envelope PASSED
 tests/test_case.py::TestCaseFiles::test_stl_file_exists[case_front_bezel.stl] PASSED
 tests/test_case.py::TestCaseFiles::test_stl_file_exists[case_rear_grooved.stl] PASSED
 tests/test_case.py::TestCaseFiles::test_stl_file_exists[case_battery_door.stl] PASSED
@@ -259,9 +263,9 @@ tests/test_pcb.py::Test3DModelsAndSilkscreen::test_pin1_polarity_indicators PASS
 ├── libs/                               # Custom symbols and footprints
 │   ├── gameboy_handheld.kicad_sym      # Custom ILI9341 2.4" TFT display symbol
 │   └── gameboy_handheld.pretty/        # Custom 10-pin display footprint & 3D model
-├── tests/                              # Automated 47-point hardware & assembly verification suite
+├── tests/                              # Automated 51-point hardware & assembly verification suite
 │   ├── conftest.py                     # S-expression AST parsers & KiCad CLI fixtures
-│   ├── test_assembly_e2e.py            # 7-stage end-to-end mechanical assembly verification
+│   ├── test_assembly_e2e.py            # 11-stage end-to-end mechanical assembly verification
 │   ├── test_pcb.py                     # 25-point PCB geometry, connectivity, DFM & circuit tests
 │   └── test_case.py                    # 15-point 3D mechanical enclosure & clearance tests
 ├── case/                               # Parametric 3D snap-fit enclosure CAD subsystem

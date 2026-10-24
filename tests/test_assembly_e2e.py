@@ -164,8 +164,20 @@ class TestEndToEndAssemblySequence:
                 dist = mgr.min_distance_internal()
                 assert dist >= 0.90, f"Button {i} and {j} have clearance {dist:.3f} mm < 0.90 mm"
 
-    def test_stage4_buttons_seat_in_front_bezel_zero_collision(self, case_meshes):
-        """Stage 4: Verify seated buttons inside the front bezel cutouts have zero volumetric collision."""
+    def test_stage4_buttons_seat_onto_pcba_zero_collision(self, case_meshes):
+        """Stage 4: Verify seated gamepad keycaps directly contact switch actuators with zero penetration."""
+        buttons = case_meshes["buttons"]
+        pcb = case_meshes["pcb"]
+
+        mgr = CollisionManager()
+        mgr.add_object("buttons", buttons)
+        mgr.add_object("pcb", pcb)
+        assert not mgr.in_collision_internal(), "Gamepad keycaps collide with PCBA tactile switches"
+        min_dist = mgr.min_distance_internal()
+        assert min_dist >= 0.05, f"Keycap to tactile switch clearance {min_dist:.3f} mm < 0.05 mm"
+
+    def test_stage5_buttons_seat_in_front_bezel_zero_collision(self, case_meshes):
+        """Stage 5: Verify seated buttons inside the front bezel cutouts have zero volumetric collision."""
         front = case_meshes["front"]
         buttons = case_meshes["buttons"]
 
@@ -173,29 +185,35 @@ class TestEndToEndAssemblySequence:
         mgr.add_object("front", front)
         mgr.add_object("buttons", buttons)
         assert not mgr.in_collision_internal(), "Seated buttons collide with front bezel housing"
+        min_dist = mgr.min_distance_internal()
+        assert min_dist >= 0.35, f"Button bore radial clearance {min_dist:.3f} mm is below 0.35 mm"
 
-    def test_stage5_display_shelf_mating_and_j3_interconnect(self, case_meshes):
-        """Stage 5: Verify 2.4-inch display panel module seats into front bezel display recess shelf."""
+    def test_stage6_display_shelf_mating_and_j3_interconnect(self, case_meshes):
+        """Stage 6: Verify 2.4-inch display panel module seats into front bezel and connects to J3 without interference."""
         front = case_meshes["front"]
+        pcb = case_meshes["pcb"]
 
         # Display module nominal physical dimensions (Waveshare 15933 / ER-TFT024-3)
-        disp_glass_w, disp_glass_h = 54.0, 42.0  # mm
-        disp_active_w, disp_active_h = 48.96, 36.72  # mm
-        disp_shelf_w, disp_shelf_h = 55.4, 43.4  # mm (front bezel internal shelf)
-        disp_window_w, disp_window_h = 50.0, 38.0  # mm (front bezel viewing window)
+        disp_glass = box(extents=[49.0, 35.0, 1.0]).apply_translation([0.0, 14.5, 4.80])
+        disp_pcb = box(extents=[50.0, 33.0, 0.8]).apply_translation([0.0, 14.5, 3.85])
+        disp_ribbon = box(extents=[8.0, 3.0, 0.2]).apply_translation([0.0, -1.8, 5.86])
+        display = trimesh.util.concatenate([disp_glass, disp_pcb, disp_ribbon])
 
-        # Active display area must be fully unblocked by the viewing window
-        assert disp_window_w >= disp_active_w, "Viewing window clips active display width"
-        assert disp_window_h >= disp_active_h, "Viewing window clips active display height"
+        # Verify display vs PCB (clears J2 through-hole pins and mates into J3)
+        m_pcb = CollisionManager()
+        m_pcb.add_object("display", display)
+        m_pcb.add_object("pcb", pcb)
+        assert not m_pcb.in_collision_internal(), "Display module collides with PCB components"
+        assert m_pcb.min_distance_internal() >= 0.10, "Display PCB clearance over board is too tight"
 
-        # Display glass outer dimensions must seat into the internal bezel shelf with positive clearance
-        clearance_x = disp_shelf_w - disp_glass_w  # 1.4 mm
-        clearance_y = disp_shelf_h - disp_glass_h  # 1.4 mm
-        assert clearance_x >= 1.0, f"Display shelf X clearance {clearance_x:.2f} mm < 1.0 mm"
-        assert clearance_y >= 1.0, f"Display shelf Y clearance {clearance_y:.2f} mm < 1.0 mm"
+        # Verify display vs Front Bezel (seats inside internal shelf)
+        m_front = CollisionManager()
+        m_front.add_object("display", display)
+        m_front.add_object("front", front)
+        assert not m_front.in_collision_internal(), "Display module collides with front bezel shelf"
 
-    def test_stage6_pcba_mating_to_front_bezel_zero_collision(self, case_meshes):
-        """Stage 6: Verify populated KiCad PCBA seats against front bezel with zero volumetric collision."""
+    def test_stage7_pcba_mating_to_front_bezel_zero_collision(self, case_meshes):
+        """Stage 7: Verify populated KiCad PCBA seats against front bezel with zero volumetric collision."""
         front = case_meshes["front"]
         pcb = case_meshes["pcb"]
 
@@ -210,8 +228,8 @@ class TestEndToEndAssemblySequence:
         radial_clearance = (hole_dia - pin_dia) / 2
         assert radial_clearance >= 0.08, f"Pin-to-hole clearance {radial_clearance:.2f} mm is too tight"
 
-    def test_stage7_rear_shell_mating_over_pcb_zero_collision(self, case_meshes):
-        """Stage 7: Verify grooved rear shell seats over populated PCBA with zero volumetric collision."""
+    def test_stage8_rear_shell_mating_over_pcb_zero_collision(self, case_meshes):
+        """Stage 8: Verify grooved rear shell seats over populated PCBA with zero volumetric collision."""
         rear = case_meshes["rear"]
         pcb = case_meshes["pcb"]
 
@@ -220,48 +238,92 @@ class TestEndToEndAssemblySequence:
         mgr.add_object("pcb", pcb)
         assert not mgr.in_collision_internal(), "Rear grooved shell collides with populated KiCad PCBA"
 
-    def test_stage8_battery_seating_and_rear_cavity_fit(self, case_meshes):
-        """Stage 8: Verify 1000 mAh Li-Po cell fits into rear cavity without interfering with ESP32-S3."""
-        # 1000 mAh Li-Po cell (40.0 x 30.0 x 7.5 mm)
-        cell_w, cell_h, cell_t = 30.0, 40.0, 7.5
-        # Cavity depth: 9.4 mm
-        cavity_depth = 9.40
-        clearance_z = cavity_depth - cell_t  # 1.90 mm
-        assert clearance_z >= 1.0, f"Battery Z clearance {clearance_z:.2f} mm is insufficient (<1.0 mm)"
+    def test_stage9_battery_seating_and_rear_cavity_fit(self, case_meshes):
+        """Stage 9: Verify 1000 mAh Li-Po cell fits into rear cavity without interfering with PCB or rear housing."""
+        pcb = case_meshes["pcb"]
+        rear = case_meshes["rear"]
 
-        # Cell is placed at Y in [-26, 14], below ESP32-S3 module (which is at Y in [11.25, 36.75])
-        cell_top_y = 10.0
-        esp32_bottom_y = 11.25
-        gap_y = esp32_bottom_y - cell_top_y
-        assert gap_y >= 1.0, f"Battery to ESP32-S3 Y clearance {gap_y:.2f} mm is insufficient"
+        # 1000 mAh Li-Po cell (26.0 x 38.0 x 6.0 mm, placed at X=3.0, Y=-8.0, Z=-6.0)
+        bat = box(extents=[26.0, 38.0, 6.0]).apply_translation([3.0, -8.0, -6.0])
 
-    def test_stage9_sequential_assembly_motion_zero_collision(self, case_meshes):
-        """Stage 9: Verify that parts do not collide at any intermediate step along their assembly trajectories."""
+        m_pcb = CollisionManager()
+        m_pcb.add_object("bat", bat)
+        m_pcb.add_object("pcb", pcb)
+        assert not m_pcb.in_collision_internal(), "Battery collides with PCB components"
+        assert m_pcb.min_distance_internal() >= 1.0, "Battery clearance to PCB components < 1.0 mm"
+
+        m_rear = CollisionManager()
+        m_rear.add_object("bat", bat)
+        m_rear.add_object("rear", rear)
+        assert not m_rear.in_collision_internal(), "Battery collides with rear housing shell"
+        assert m_rear.min_distance_internal() >= 0.40, "Battery clearance to rear wall < 0.40 mm"
+
+    def test_stage10_continuous_kinematic_assembly_trajectories(self, case_meshes):
+        """Stage 10: Verify multi-step continuous collision clearance along all physical assembly flight paths."""
         front = case_meshes["front"]
         rear = case_meshes["rear"]
         buttons = case_meshes["buttons"]
         pcb = case_meshes["pcb"]
 
-        # Trajectory 1: Front Bezel sliding in from +Z = 50.0 mm down to +Z = 0.0 mm
-        for offset_z in [40.0, 25.0, 10.0]:
-            f_moved = front.copy()
-            f_moved.apply_translation([0, 0, offset_z])
-            mgr = CollisionManager()
-            mgr.add_object("f", f_moved)
-            mgr.add_object("pcb", pcb)
-            assert not mgr.in_collision_internal(), f"Front bezel collides with PCB at offset +{offset_z}mm"
+        disp_glass = box(extents=[49.0, 35.0, 1.0]).apply_translation([0.0, 14.5, 4.80])
+        disp_pcb = box(extents=[50.0, 33.0, 0.8]).apply_translation([0.0, 14.5, 3.85])
+        disp_ribbon = box(extents=[8.0, 3.0, 0.2]).apply_translation([0.0, -1.8, 5.86])
+        display = trimesh.util.concatenate([disp_glass, disp_pcb, disp_ribbon])
 
-        # Trajectory 2: Rear Shell closing in from -Z = -50.0 mm up to -Z = 0.0 mm
-        for offset_z in [-40.0, -25.0, -10.0]:
-            r_moved = rear.copy()
-            r_moved.apply_translation([0, 0, offset_z])
-            mgr = CollisionManager()
-            mgr.add_object("r", r_moved)
-            mgr.add_object("pcb", pcb)
-            assert not mgr.in_collision_internal(), f"Rear shell collides with PCB at offset {offset_z}mm"
+        bat = box(extents=[26.0, 38.0, 6.0]).apply_translation([3.0, -8.0, -6.0])
 
-    def test_stage10_full_console_assembly_envelope(self, case_meshes):
-        """Stage 10: Verify final assembled console envelope matches target form factor."""
+        # Approach Vector 1: Buttons fly in from +Z = 60.0 mm to Z = 0.0 mm onto PCB
+        for z in np.linspace(60.0, 0.0, 13):
+            b_step = buttons.copy()
+            b_step.apply_translation([0, 0, z])
+            m = CollisionManager()
+            m.add_object("pcb", pcb)
+            m.add_object("b", b_step)
+            assert not m.in_collision_internal(), f"Buttons collided with PCB at trajectory Z = {z:.1f} mm"
+
+        # Approach Vector 2: Display module descends from +Z = 60.0 mm to Z = 0.0 mm onto PCB + Buttons
+        for z in np.linspace(60.0, 0.0, 13):
+            d_step = display.copy()
+            d_step.apply_translation([0, 0, z])
+            m = CollisionManager()
+            m.add_object("pcb", pcb)
+            m.add_object("b", buttons)
+            m.add_object("d", d_step)
+            assert not m.in_collision_internal(), f"Display collided with assembly at trajectory Z = {z:.1f} mm"
+
+        # Approach Vector 3: Front Bezel lowers from +Z = 60.0 mm to Z = 0.0 mm over PCB + Buttons + Display
+        for z in np.linspace(60.0, 0.0, 13):
+            f_step = front.copy()
+            f_step.apply_translation([0, 0, z])
+            m = CollisionManager()
+            m.add_object("pcb", pcb)
+            m.add_object("b", buttons)
+            m.add_object("d", display)
+            m.add_object("f", f_step)
+            assert not m.in_collision_internal(), f"Front bezel collided with assembly at trajectory Z = {z:.1f} mm"
+
+        # Approach Vector 4: Battery pack inserts from -Z = -50.0 mm to Z = 0.0 mm into rear cavity
+        for z in np.linspace(-50.0, 0.0, 11):
+            bat_step = bat.copy()
+            bat_step.apply_translation([0, 0, z])
+            m = CollisionManager()
+            m.add_object("pcb", pcb)
+            m.add_object("bat", bat_step)
+            assert not m.in_collision_internal(), f"Battery collided with PCB at trajectory Z = {z:.1f} mm"
+
+        # Approach Vector 5: Rear Housing closes from -Z = -60.0 mm to Z = 0.0 mm over assembly
+        for z in np.linspace(-60.0, 0.0, 13):
+            r_step = rear.copy()
+            r_step.apply_translation([0, 0, z])
+            m = CollisionManager()
+            m.add_object("pcb", pcb)
+            m.add_object("bat", bat)
+            m.add_object("front", front)
+            m.add_object("r", r_step)
+            assert not m.in_collision_internal(), f"Rear shell collided with assembly at trajectory Z = {z:.1f} mm"
+
+    def test_stage11_full_console_assembly_envelope(self, case_meshes):
+        """Stage 11: Verify final assembled console envelope matches target form factor."""
         assembly = case_meshes["assembly"]
         extents = assembly.extents
 

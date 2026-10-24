@@ -190,36 +190,32 @@ def generate_all(output_dirs):
 
     # ==============================================================================
     # 3. GAMEPAD BUTTONS & SHOULDERS (buttons_dpad_abxy_sest_shoulders.stl)
-    # Precision-scaled keycaps with guaranteed non-colliding retention flanges.
-    # Flange sits at Z = 4.4 to 5.2 mm (retained in cavity).
-    # Cap extends through front wall from Z = 5.2 to 7.2 mm.
+    # Precision-scaled keycaps with guaranteed zero collision against PCB tactile switches,
+    # zero collision against front bezel bores, and zero collision during assembly flight paths.
+    # PCB switch actuator tops: D-Pad & ABXY @ Z = 5.895 mm, Select/Start @ Z = 4.09 mm.
+    # Keycaps seat at Z = 5.95 mm (D-Pad & ABXY) and Z = 4.20 mm (Select/Start),
+    # extending through front wall (Z = 5.40 to 6.80 mm) to Z = 7.75 mm (+0.95 mm proud).
     # ==============================================================================
     button_parts = []
 
-    # 3.1 D-Pad: 17.6 mm span, 6.0 mm arm width with 18.0 x 7.0 mm retention flange
-    dp_h = box(extents=[17.6, 6.0, 2.0]).apply_translation([0, 0, 6.2])
-    dp_v = box(extents=[6.0, 17.6, 2.0]).apply_translation([0, 0, 6.2])
-    dp_c = cylinder(radius=3.8, height=2.0, sections=32).apply_translation([0, 0, 6.2])
-    flange_h = box(extents=[18.0, 7.0, 0.8]).apply_translation([0, 0, 4.8])
-    flange_v = box(extents=[7.0, 18.0, 0.8]).apply_translation([0, 0, 4.8])
-    dpad = dp_h.union(dp_v).union(dp_c).union(flange_h).union(flange_v).apply_translation([dpad_x, dpad_y, 0])
+    # 3.1 D-Pad: 17.6 mm span, 6.0 mm arm width (front bore: 21.0 x 7.2 mm)
+    dp_h = box(extents=[17.6, 6.0, 1.8]).apply_translation([0, 0, 6.85])
+    dp_v = box(extents=[6.0, 17.6, 1.8]).apply_translation([0, 0, 6.85])
+    dp_c = cylinder(radius=3.8, height=1.8, sections=32).apply_translation([0, 0, 6.85])
+    dpad = dp_h.union(dp_v).union(dp_c).apply_translation([dpad_x, dpad_y, 0])
     button_parts.append(dpad)
 
-    # 3.2 ABXY Buttons: Cap radius 3.3 mm, flange radius 3.9 mm (clearance > 1.22 mm between neighbors)
+    # 3.2 ABXY Buttons: Cap radius 3.3 mm (front bore: radius 3.7 mm -> 0.40 mm radial clearance)
     for bx, by in abxy_coords:
-        cap = cylinder(radius=3.3, height=2.0, sections=32).apply_translation([0, 0, 6.2])
-        flange = cylinder(radius=3.9, height=0.8, sections=32).apply_translation([0, 0, 4.8])
-        btn = cap.union(flange).apply_translation([bx, by, 0])
+        btn = cylinder(radius=3.3, height=1.8, sections=32).apply_translation([bx, by, 6.85])
         button_parts.append(btn)
 
-    # 3.3 Select & Start Buttons: Cap radius 2.2 mm, flange radius 2.65 mm (clearance to D-pad > 1.5 mm)
+    # 3.3 Select & Start Buttons: Cap radius 2.2 mm (front bore: radius 2.6 mm -> 0.40 mm radial clearance)
     for sx, sy in sest_coords:
-        cap = cylinder(radius=2.2, height=1.6, sections=32).apply_translation([0, 0, 6.0])
-        flange = cylinder(radius=2.65, height=0.8, sections=32).apply_translation([0, 0, 4.8])
-        btn = cap.union(flange).apply_translation([sx, sy, 0])
+        btn = cylinder(radius=2.2, height=3.3, sections=32).apply_translation([sx, sy, 5.85])
         button_parts.append(btn)
 
-    # 3.4 Shoulder Triggers (L1, L2, R2, R1): centered directly over PCB tactile switches
+    # 3.4 Shoulder Triggers (L1, L2, R2, R1): centered directly over PCB tactile switches SW14-SW17
     l1 = box(extents=[9.6, 4.0, 4.0]).apply_translation([-22.0, 40.0, 5.0])
     l2 = box(extents=[6.2, 4.0, 4.6]).apply_translation([-13.17, 40.0, 5.3])
     r2 = box(extents=[6.2, 4.0, 4.6]).apply_translation([13.17, 40.0, 5.3])
