@@ -90,9 +90,9 @@ BOM_DATABASE = {
         "package": "JST_PH_S2B-PH-K_1x02_P2.00mm_Horizontal",
     },
     "ILI9341_TFT_2.4in": {
-        "mfr": "Samtec / Custom",
-        "mpn": "SSW-110-01-G-S / 10-Pin 2.54mm Socket",
-        "desc": "10-Pin 2.54mm Pitch Socket Header for 2.4-inch 320x240 ILI9341 SPI Display",
+        "mfr": "JST Sales America",
+        "mpn": "SM10B-GHS-TB(LF)(SN)",
+        "desc": "10-Pin 1.25mm Pitch Horizontal SMT Shrouded Header for Waveshare 15933 / ER-TFT024-3 Display",
         "package": "ILI9341_TFT_2.4in_10P",
     },
     "SW_SPDT": {
@@ -294,6 +294,41 @@ def export_bom():
                 "Description": entry.get("desc", val),
             }
         )
+
+    # Add turnkey module line items required for full system assembly
+    rows.append(
+        {
+            "Designator": "DISP1",
+            "Quantity": 1,
+            "Value": "2.4in_ILI9341_SPI_TFT",
+            "Footprint": "Module:TFT_2.4in_320x240",
+            "Manufacturer": "Waveshare Electronics / EastRising",
+            "MPN": "15933 (Waveshare 2.4inch LCD Module) / ER-TFT024-3",
+            "Description": "2.4-inch 320x240 RGB Color TFT Display, ILI9341 SPI Controller, 3.3V Logic with 10-pin JST GH Cable",
+        }
+    )
+    rows.append(
+        {
+            "Designator": "BT1",
+            "Quantity": 1,
+            "Value": "1000mAh_3.7V_LiPo",
+            "Footprint": "Battery:1S_LiPo_40x30x8mm",
+            "Manufacturer": "PKCELL / Adafruit",
+            "MPN": "LP803040 / ID 258",
+            "Description": "3.7V 1000mAh 1S Li-Po Rechargeable Battery with JST-PH 2.00mm 2-Pin Female Connector",
+        }
+    )
+    rows.append(
+        {
+            "Designator": "CASE1",
+            "Quantity": 1,
+            "Value": "GKD_Pixel_3D_Case_Kit",
+            "Footprint": "Enclosure:GKD_Pixel_63x80mm",
+            "Manufacturer": "GKD Pixel Custom",
+            "MPN": "GKD-PIXEL-CASE-V1",
+            "Description": "Full 3D Snap-Fit Enclosure Kit (Front Bezel, Rear Shell, Battery Hatch, D-Pad, ABXY, SE/ST, Shoulders)",
+        }
+    )
 
     rows.sort(key=lambda r: natural_sort_key(r["Designator"].split(", ")[0]))
 
