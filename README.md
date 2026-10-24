@@ -5,7 +5,7 @@
 [![ERC Status](https://img.shields.io/badge/ERC-Zero%20Errors-brightgreen.svg)](gameboy-copperpilot.kicad_sch)
 [![Lion Circuits Turnkey](https://img.shields.io/badge/Fab-Lion%20Circuits%204--Layer-orange.svg)](#lion-circuits-4-layer-manufacturing--pcba-specifications)
 [![3D Enclosure](https://img.shields.io/badge/Case-Watertight%20Snap--Fit%20STLs-blue.svg)](case/)
-[![Automated Tests](https://img.shields.io/badge/Tests-47%2F47%20Passed-success.svg)](tests/)
+[![Automated Tests](https://img.shields.io/badge/Tests-50%2F50%20Passed-success.svg)](tests/)
 
 An ultra-compact, high-performance, single-board retro handheld gaming console built on a precision 4-layer FR-4 PCB with an engineered snap-fit enclosure inspired by the iconic **GKD Pixel** micro-handheld form factor (**63.00 mm x 80.00 mm**). Powered by an Espressif ESP32-S3 dual-core microcontroller, the console features a high-refresh 2.4-inch 320x240 ILI9341 SPI color TFT display, 14 responsive gameplay and shoulder pushbuttons, integrated USB-C charging and native USB-OTG/JTAG programming, automatic load-sharing battery power management for uninterrupted gameplay while charging, and a removable 1000 mAh Li-Po cell.
 
@@ -42,6 +42,13 @@ An ultra-compact, high-performance, single-board retro handheld gaming console b
 | Front Layer (`F.Cu` — Tactile Controls & Display) | Back Layer (`B.Cu` — ESP32-S3, USB-C & Power ICs) |
 | :---: | :---: |
 | ![PCB Front Layout](docs/images/pcb_routed_top.png) | ![PCB Back Layout](docs/images/pcb_routed_bottom.png) |
+
+### Photorealistic 3D KiCad PCB Renders (`kicad-cli pcb render`)
+
+| KiCad 3D Top View (Tactile Controls, JST-GH J3 & Top Shoulder Switches) | KiCad 3D Bottom View (ESP32-S3 Module, USB-C, JST-PH & Power Management) |
+| :---: | :---: |
+| ![KiCad 3D Top](docs/images/pcb_kicad_3d_top.png) | ![KiCad 3D Bottom](docs/images/pcb_kicad_3d_bottom.png) |
+| *Populated Front: 14x Tactile Switches, J3 Display Receptacle, D1/D3 LEDs* | *Populated Back: ESP32-S3-WROOM-1, USB-C, JST-PH Battery Header, LDO & Charger* |
 
 <p align="center">
   <img src="docs/images/schematic_render.png" alt="Complete KiCad Schematic Capture" width="900">

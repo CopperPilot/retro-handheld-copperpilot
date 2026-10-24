@@ -2,7 +2,8 @@
 """
 High-Resolution 3D Enclosure & PCBA Assembly Visualization Suite for GKD Pixel Console.
 Generates smooth, anti-aliased engineering renders, exploded views, side-by-side reference
-comparisons, and a step-by-step 3D assembly motion animation (GIF and MP4 video).
+comparisons, and a realistic step-by-step 3D assembly motion animation (GIF and MP4 video)
+using genuine 3D exports from KiCad (GLB/STL) and parametric CAD models.
 """
 
 import os
@@ -11,6 +12,7 @@ import imageio
 import numpy as np
 from PIL import Image
 import pyvista as pv
+import trimesh
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
@@ -24,7 +26,7 @@ os.makedirs(DOCS_IMAGES_DIR, exist_ok=True)
 
 
 def build_scene_assets():
-    """Loads and prepares all CAD meshes with feature-angle normal smoothing and proper materials."""
+    """Loads all CAD meshes with feature-angle normal smoothing, including genuine KiCad 3D PCBA."""
     front = pv.read(os.path.join(MODELS_DIR, "case_front_bezel.stl")).compute_normals(
         feature_angle=30.0, split_vertices=True
     )
@@ -38,51 +40,54 @@ def build_scene_assets():
         feature_angle=30.0, split_vertices=True
     )
 
-    # 2.4" Display Panel Module: Glass face + PCB backing frame
-    display_glass = pv.Box(bounds=[-25.0, 25.0, 14.07 - 19.0, 14.07 + 19.0, 1.8, 2.6])
-    display_pcb = pv.Box(bounds=[-27.5, 27.5, 14.07 - 21.5, 14.07 + 21.5, 0.4, 1.8])
+    # 1. Genuine KiCad 3D PCBA with full realistic colors & materials
+    glb_path = os.path.join(MODELS_DIR, "gameboy_pcb_populated.glb")
+    if not os.path.exists(glb_path):
+        # Generate on the fly using kicad-cli if missing
+        pcb_file = os.path.join(ROOT_DIR, "gameboy-copperpilot.kicad_pcb")
+        subprocess.run(["kicad-cli", "pcb", "export", "glb", "--output", glb_path, "--force", pcb_file], check=True)
 
-    # 4-Layer FR-4 PCB (63.0 x 80.0 x 1.6 mm) with corner mounting holes and snap notches
-    pcb = pv.Box(bounds=[-31.5, 31.5, -40.0, 40.0, -1.6, 0.0])
+    scene = trimesh.load(glb_path)
+    mesh = scene.to_geometry()
+    mesh.apply_scale(1000.0)  # Convert meters to mm
 
-    # Populated PCBA Components:
-    # Front tactile switches under D-pad and ABXY
-    sw_front = []
-    # D-pad switches
-    for sx, sy in [(-16.85, -20.96 + 6.3), (-16.85, -20.96 - 6.3), (-16.85 - 6.3, -20.96), (-16.85 + 6.3, -20.96)]:
-        sw = pv.Box(bounds=[sx - 3.0, sx + 3.0, sy - 3.0, sy + 3.0, 0.0, 2.5])
-        sw_front.append(sw)
-    # ABXY switches
-    for bx, by in [(16.51, -15.42), (9.92, -21.74), (23.05, -21.83), (16.39, -28.02)]:
-        sw = pv.Box(bounds=[bx - 3.0, bx + 3.0, by - 3.0, by + 3.0, 0.0, 2.5])
-        sw_front.append(sw)
-    # Display connector J3
-    j3 = pv.Box(bounds=[31.5 - 7.5 - 31.5, 31.5 + 7.5 - 31.5, 40.0 - 46.0 - 2.5, 40.0 - 46.0 + 2.5, 0.0, 1.65])
-    sw_front.append(j3)
+    # Transform from KiCad GLTF to Case Coordinate Frame:
+    # KiCad X: [0, 63] -> Case X: [-31.5, +31.5]
+    # KiCad Z (thickness): [-4.9, 5.9] -> Case Z
+    # KiCad Y: [0, 80] (top to bottom) -> Case Y: [+40, -40]
+    verts = mesh.vertices.copy()
+    x_case = verts[:, 0] - 31.5
+    y_case = 40.0 - verts[:, 2]
+    z_case = verts[:, 1]
+    case_verts = np.column_stack([x_case, y_case, z_case])
 
-    pcba_front_parts = sw_front[0]
-    for s in sw_front[1:]:
-        pcba_front_parts = pcba_front_parts.merge(s)
+    faces = np.pad(mesh.faces, ((0, 0), (1, 0)), constant_values=3).ravel()
+    pcb_full = pv.PolyData(case_verts, faces)
+    vertex_colors = mesh.visual.to_color().vertex_colors[:, :3]
+    pcb_full.point_data["RGB"] = vertex_colors
 
-    # Back components: ESP32-S3 module, USB-C, JST-PH, Power ICs
-    esp32 = pv.Box(bounds=[-9.0, 9.0, 40.0 - 16.0 - 12.75, 40.0 - 16.0 + 12.75, -4.75, -1.6])
-    usbc = pv.Box(bounds=[-4.5, 4.5, -40.0, -40.0 + 7.5, -4.8, -1.6])
-    jst_ph = pv.Box(bounds=[15.0 - 31.5 - 3.0, 15.0 - 31.5 + 3.0, 40.0 - 39.0 - 3.8, 40.0 - 39.0 + 3.8, -7.6, -1.6])
-    pcba_back_parts = esp32.merge(usbc).merge(jst_ph)
+    # Also build a bare PCB substrate mesh (for Stage 1 animation)
+    bare_pcb = pv.Box(bounds=[-31.5, 31.5, -40.0, 40.0, -1.6, 0.0])
 
-    # 1000 mAh Li-Po Cell (40.0 x 30.0 x 8.0 mm)
-    battery = pv.Box(bounds=[-20.0, 20.0, 15.0 - 15.0, 15.0 + 15.0, -9.6, -1.6])
+    # 2. 2.4" Display Panel Module (Waveshare 15933 / ER-TFT024-3, ILI9341 SPI TFT):
+    # Glass face (54.0 x 42.0 x 1.6 mm) + PCB backing frame (55.0 x 43.0 x 1.2 mm) + FPC ribbon
+    display_glass = pv.Box(bounds=[-27.0, 27.0, 14.07 - 21.0, 14.07 + 21.0, 1.8, 3.4])
+    display_pcb = pv.Box(bounds=[-27.5, 27.5, 14.07 - 21.5, 14.07 + 21.5, 0.6, 1.8])
+    display_ribbon = pv.Box(bounds=[-4.0, 4.0, -8.0, 14.07 - 21.5, 0.2, 1.0])
+
+    # 3. 1000 mAh Li-Po Battery Pack (LP803040 / 40.0 x 30.0 x 7.5 mm) with JST-PH leads
+    battery = pv.Box(bounds=[-15.0, 15.0, -26.0, 14.0, -10.3, -2.8])
 
     return {
         "front": front,
         "rear": rear,
         "door": door,
         "buttons": buttons,
+        "pcb_full": pcb_full,
+        "bare_pcb": bare_pcb,
         "display_glass": display_glass,
         "display_pcb": display_pcb,
-        "pcb": pcb,
-        "pcba_front": pcba_front_parts,
-        "pcba_back": pcba_back_parts,
+        "display_ribbon": display_ribbon,
         "battery": battery,
     }
 
@@ -113,14 +118,13 @@ def render_front_view(assets):
     front = assets["front"].copy()
     glass = assets["display_glass"].copy()
     buttons = assets["buttons"].copy()
-    buttons.translate([0, 0, 1.8])
 
     p.add_mesh(front, color="#747c87", smooth_shading=True, specular=0.4, specular_power=25)
     p.add_mesh(glass, color="#090a0d", smooth_shading=True, specular=0.85, specular_power=80)
     p.add_mesh(buttons, color="#22252a", smooth_shading=True, specular=0.3, specular_power=20)
 
-    p.camera_position = [(0, 0, 160), (0, 0, 0), (0, 1, 0)]
     p.reset_camera()
+    p.camera_position = [(0, 0, 160), (0, 0, 0), (0, 1, 0)]
     p.camera.zoom(0.92)
     save_render(p, "case_render_front.png")
     p.close()
@@ -133,14 +137,11 @@ def render_rear_view(assets):
     setup_lighting(p)
 
     rear = assets["rear"].copy()
-    door = assets["door"].copy()
-    door.translate([0, 15.0, -5.6 + 0.9])
 
     p.add_mesh(rear, color="#747c87", smooth_shading=True, specular=0.4, specular_power=25)
-    p.add_mesh(door, color="#585e68", smooth_shading=True, specular=0.4, specular_power=25)
 
-    p.camera_position = [(0, 0, -160), (0, 0, 0), (0, 1, 0)]
     p.reset_camera()
+    p.camera_position = [(0, 0, -160), (0, 0, 0), (0, 1, 0)]
     p.camera.zoom(0.92)
     save_render(p, "case_render_rear.png")
     p.close()
@@ -154,72 +155,64 @@ def render_isometric_view(assets):
 
     front = assets["front"].copy()
     rear = assets["rear"].copy()
-    door = assets["door"].copy()
     buttons = assets["buttons"].copy()
     glass = assets["display_glass"].copy()
 
-    buttons.translate([0, 0, 1.8])
-    rear.translate([0, 0, -2.6 - 5.6])
-    door.translate([0, 15.0, -2.6 - 11.2 + 0.9])
-
     p.add_mesh(front, color="#79818c", smooth_shading=True, specular=0.45, specular_power=30)
     p.add_mesh(rear, color="#5d636e", smooth_shading=True, specular=0.45, specular_power=30)
-    p.add_mesh(door, color="#4e535c", smooth_shading=True, specular=0.45, specular_power=30)
     p.add_mesh(glass, color="#08090b", smooth_shading=True, specular=0.90, specular_power=90)
     p.add_mesh(buttons, color="#25282e", smooth_shading=True, specular=0.35, specular_power=20)
 
-    p.camera_position = [(85, 45, 125), (0, 0, -3), (0, 1, 0)]
     p.reset_camera()
+    p.camera_position = [(85, 45, 125), (0, 0, -3), (0, 1, 0)]
     p.camera.zoom(0.92)
     save_render(p, "case_render_isometric.png")
     p.close()
 
 
 def render_exploded_view(assets):
-    print("==> [4/6] Rendering Exploded Subsystem Assembly View...")
-    p = pv.Plotter(off_screen=True, window_size=[1600, 1800])
+    print("==> [4/6] Rendering Exploded Subsystem Assembly View with KiCad 3D PCBA...")
+    p = pv.Plotter(off_screen=True, window_size=[1600, 1200])
     p.set_background("#fbfcfd")
     setup_lighting(p)
 
-    # Explode components along Z axis
+    # Explode components cleanly along Z axis
     buttons = assets["buttons"].copy()
-    buttons.translate([0, 0, 48.0])
+    buttons.translate([0, 0, 80.0], inplace=True)
 
     front = assets["front"].copy()
-    front.translate([0, 0, 24.0])
+    front.translate([0, 0, 48.0], inplace=True)
 
     disp_glass = assets["display_glass"].copy()
-    disp_glass.translate([0, 0, 14.0])
+    disp_glass.translate([0, 0, 26.0], inplace=True)
     disp_pcb = assets["display_pcb"].copy()
-    disp_pcb.translate([0, 0, 13.0])
+    disp_pcb.translate([0, 0, 25.0], inplace=True)
+    disp_ribbon = assets["display_ribbon"].copy()
+    disp_ribbon.translate([0, 0, 16.0], inplace=True)
 
-    pcb = assets["pcb"].copy()
-    pcba_f = assets["pcba_front"].copy()
-    pcba_b = assets["pcba_back"].copy()
-
-    rear = assets["rear"].copy()
-    rear.translate([0, 0, -26.0])
+    # Genuine KiCad 3D Populated PCBA centered at Z = 0
+    pcb_full = assets["pcb_full"].copy()
 
     battery = assets["battery"].copy()
-    battery.translate([0, 0, -42.0])
+    battery.translate([0, 0, -25.0], inplace=True)
 
-    door = assets["door"].copy()
-    door.translate([0, 15.0, -56.0])
+    rear = assets["rear"].copy()
+    rear.translate([0, 0, -55.0], inplace=True)
 
     p.add_mesh(buttons, color="#25282e", smooth_shading=True, specular=0.3)
     p.add_mesh(front, color="#79818c", smooth_shading=True, opacity=0.92, specular=0.4)
     p.add_mesh(disp_glass, color="#090a0d", smooth_shading=True, specular=0.8)
     p.add_mesh(disp_pcb, color="#1e3a5f", smooth_shading=True)
-    p.add_mesh(pcb, color="#1b4d3e", smooth_shading=True, specular=0.2)  # High-grade Green/Black FR-4
-    p.add_mesh(pcba_f, color="#c0a060", smooth_shading=True, specular=0.5)  # Gold/tactile switches
-    p.add_mesh(pcba_b, color="#2b2e35", smooth_shading=True, specular=0.5)  # Shield cans & ICs
+    p.add_mesh(disp_ribbon, color="#c0a060", smooth_shading=True)
+    p.add_mesh(pcb_full, rgb=True, smooth_shading=True, specular=0.3)
+    p.add_mesh(battery, color="#206095", smooth_shading=True, specular=0.3)
     p.add_mesh(rear, color="#5d636e", smooth_shading=True, opacity=0.92, specular=0.4)
-    p.add_mesh(battery, color="#206095", smooth_shading=True, specular=0.3)  # Blue Li-Po cell
-    p.add_mesh(door, color="#4e535c", smooth_shading=True, specular=0.4)
 
-    p.camera_position = [(95, 60, 140), (0, 0, -5), (0, 1, 0)]
-    p.reset_camera()
-    p.camera.zoom(0.92)
+    # Side 3/4 perspective looking across the Z explode axis
+    p.camera.position = (180.0, 40.0, 70.0)
+    p.camera.focal_point = (0.0, 0.0, 10.0)
+    p.camera.up = (0.0, 1.0, 0.0)
+    p.camera.zoom(1.1)
     save_render(p, "case_render_exploded.png")
     p.close()
 
@@ -248,7 +241,6 @@ def generate_reference_comparisons():
         im_ref = im_ref.resize((w_ref, target_h), Image.Resampling.LANCZOS)
         im_cad = im_cad.resize((w_cad, target_h), Image.Resampling.LANCZOS)
 
-        # Composite side by side with clean divider
         total_w = w_ref + w_cad + 20
         combined = Image.new("RGBA", (total_w, target_h), (251, 252, 253, 255))
         combined.paste(im_ref, (0, 0))
@@ -265,21 +257,14 @@ def generate_assembly_motion_animation(assets):
     p.set_background("#f8f9fa")
     setup_lighting(p)
 
-    total_frames = 64
+    total_frames = 80
     frames = []
 
-    # Nominal assembled Z positions:
-    # Front Bezel: Z = +2.6
-    # Buttons: seated in front bezel
-    # Display: seated in front shelf
-    # PCBA: seated against alignment bosses (Z = 0)
-    # Rear Shell: snapped behind PCBA (Z = -8.2)
-    # Battery: seated in rear bay (Z = -5.6)
-    # Battery Door: snapped shut (Z = -11.2)
-
-    p.camera_position = [(80, 50, 115), (0, 0, -4), (0, 1, 0)]
-    p.reset_camera()
-    p.camera.zoom(0.92)
+    cam_pos = (135.0, 65.0, 140.0)
+    cam_focal = (0.0, 0.0, 0.0)
+    cam_up = (0.0, 1.0, 0.0)
+    rad = np.hypot(cam_pos[0], cam_pos[2])
+    init_theta = np.arctan2(cam_pos[0], cam_pos[2])
 
     for frame_idx in range(total_frames):
         p.clear()
@@ -287,79 +272,104 @@ def generate_assembly_motion_animation(assets):
 
         t = frame_idx / (total_frames - 1)  # 0.0 to 1.0
 
-        # Phase 1 (0.0 to 0.20): PCBA components populate onto bare PCB
-        pcb_z = 0.0
-        p_pcb = assets["pcb"].copy()
-        p.add_mesh(p_pcb, color="#1b4d3e", smooth_shading=True)
+        # Maintain smooth, stable camera framing
+        if t < 0.82:
+            p.camera.position = cam_pos
+            p.camera.focal_point = cam_focal
+            p.camera.up = cam_up
+        else:
+            # Stage 6: 360-degree turntable orbit of fully assembled console
+            orbit_frac = (t - 0.82) / 0.18
+            angle = orbit_frac * 2.0 * np.pi
+            th = init_theta + angle
+            cur_x = rad * np.sin(th)
+            cur_z = rad * np.cos(th)
+            p.camera.position = (cur_x, cam_pos[1], cur_z)
+            p.camera.focal_point = cam_focal
+            p.camera.up = cam_up
 
-        if t >= 0.08:
-            sw_offset = max(0.0, 15.0 * (1.0 - (t - 0.08) / 0.10)) if t < 0.18 else 0.0
-            p_sw = assets["pcba_front"].copy()
-            p_sw.translate([0, 0, sw_offset])
-            p.add_mesh(p_sw, color="#c0a060", smooth_shading=True)
+        # ======================================================================
+        # STAGE 1 (t: 0.0 to 0.18): Bare PCB -> PCBA Component Populating
+        # ======================================================================
+        if t < 0.18:
+            blend = t / 0.18
+            p_pcb = assets["bare_pcb"].copy()
+            p.add_mesh(p_pcb, color="#1b4d3e", smooth_shading=True)
+            comp_offset = (1.0 - blend) * 30.0
+            p_full = assets["pcb_full"].copy()
+            p_full.translate([0, 0, comp_offset], inplace=True)
+            p.add_mesh(p_full, rgb=True, smooth_shading=True, opacity=max(0.1, blend))
+        else:
+            p_full = assets["pcb_full"].copy()
+            p.add_mesh(p_full, rgb=True, smooth_shading=True)
 
-            back_offset = max(0.0, -15.0 * (1.0 - (t - 0.08) / 0.10)) if t < 0.18 else 0.0
-            p_back = assets["pcba_back"].copy()
-            p_back.translate([0, 0, back_offset])
-            p.add_mesh(p_back, color="#2b2e35", smooth_shading=True)
-
-        # Phase 2 (0.20 to 0.40): Front Bezel & Buttons slide in
-        if t >= 0.20:
-            front_offset = max(0.0, 45.0 * (1.0 - (t - 0.20) / 0.15)) if t < 0.35 else 0.0
+        # ======================================================================
+        # STAGE 2 (t: 0.18 to 0.38): Front Bezel & Gamepad Buttons Enter
+        # ======================================================================
+        if t >= 0.18:
+            front_blend = min(1.0, (t - 0.18) / 0.14)
+            front_offset = (1.0 - front_blend) * 55.0
             p_front = assets["front"].copy()
-            p_front.translate([0, 0, 2.6 + front_offset])
+            p_front.translate([0, 0, front_offset], inplace=True)
             p.add_mesh(p_front, color="#79818c", smooth_shading=True, opacity=0.95)
 
+            # Buttons slide into front bezel bores from above
+            btn_blend = min(1.0, max(0.0, (t - 0.22) / 0.14))
+            btn_offset = (1.0 - btn_blend) * 75.0
             p_btn = assets["buttons"].copy()
-            btn_offset = max(0.0, 60.0 * (1.0 - (t - 0.20) / 0.15)) if t < 0.35 else 0.0
-            p_btn.translate([0, 0, 4.4 + btn_offset])
+            p_btn.translate([0, 0, btn_offset], inplace=True)
             p.add_mesh(p_btn, color="#25282e", smooth_shading=True)
 
-        # Phase 3 (0.35 to 0.55): 2.4" Display Panel seats into front bezel
-        if t >= 0.35:
-            disp_offset = max(0.0, 30.0 * (1.0 - (t - 0.35) / 0.15)) if t < 0.50 else 0.0
+        # ======================================================================
+        # STAGE 3 (t: 0.36 to 0.55): 2.4" Display Panel seats & connects to J3
+        # ======================================================================
+        if t >= 0.36:
+            disp_blend = min(1.0, (t - 0.36) / 0.14)
+            disp_offset = (1.0 - disp_blend) * 40.0
             p_glass = assets["display_glass"].copy()
-            p_glass.translate([0, 0, disp_offset])
+            p_glass.translate([0, 0, disp_offset], inplace=True)
             p.add_mesh(p_glass, color="#08090b", smooth_shading=True, specular=0.85)
 
-        # Phase 4 (0.50 to 0.70): Rear Grooved Shell closes and snaps shut
-        if t >= 0.50:
-            rear_offset = max(0.0, -45.0 * (1.0 - (t - 0.50) / 0.15)) if t < 0.65 else 0.0
-            p_rear = assets["rear"].copy()
-            p_rear.translate([0, 0, -8.2 - rear_offset])
-            p.add_mesh(p_rear, color="#5d636e", smooth_shading=True, opacity=0.95)
+            p_disp_pcb = assets["display_pcb"].copy()
+            p_disp_pcb.translate([0, 0, disp_offset], inplace=True)
+            p.add_mesh(p_disp_pcb, color="#1e3a5f", smooth_shading=True)
 
-        # Phase 5 (0.65 to 0.82): Battery inserts into rear bay
-        if t >= 0.65:
-            bat_offset = max(0.0, -35.0 * (1.0 - (t - 0.65) / 0.12)) if t < 0.77 else 0.0
+            p_ribbon = assets["display_ribbon"].copy()
+            p_ribbon.translate([0, 0, disp_offset], inplace=True)
+            p.add_mesh(p_ribbon, color="#c0a060", smooth_shading=True)
+
+        # ======================================================================
+        # STAGE 4 (t: 0.54 to 0.72): 1000 mAh Li-Po Battery Inserts into Cavity
+        # ======================================================================
+        if t >= 0.54:
+            bat_blend = min(1.0, (t - 0.54) / 0.14)
+            bat_offset = (1.0 - bat_blend) * -45.0
             p_bat = assets["battery"].copy()
-            p_bat.translate([0, 0, -4.8 - bat_offset])
+            p_bat.translate([0, 0, bat_offset], inplace=True)
             p.add_mesh(p_bat, color="#206095", smooth_shading=True)
 
-        # Phase 6 (0.75 to 0.90): Battery door snaps shut
-        if t >= 0.75:
-            door_offset = max(0.0, -30.0 * (1.0 - (t - 0.75) / 0.12)) if t < 0.87 else 0.0
-            p_door = assets["door"].copy()
-            p_door.translate([0, 15.0, -11.9 - door_offset])
-            p.add_mesh(p_door, color="#4e535c", smooth_shading=True)
-
-        # Phase 7 (0.87 to 1.0): Gentle 3D turntable rotation showing completed console
-        if t >= 0.87:
-            p.camera.Azimuth(2.5 * (frame_idx - total_frames * 0.87))
+        # ======================================================================
+        # STAGE 5 (t: 0.70 to 0.84): Rear Grooved Shell closes & snaps flush
+        # ======================================================================
+        if t >= 0.70:
+            rear_blend = min(1.0, (t - 0.70) / 0.12)
+            rear_offset = (1.0 - rear_blend) * -55.0
+            p_rear = assets["rear"].copy()
+            p_rear.translate([0, 0, rear_offset], inplace=True)
+            p.add_mesh(p_rear, color="#5d636e", smooth_shading=True, opacity=0.95)
 
         img = p.screenshot(return_img=True)
         frames.append(img)
 
     p.close()
 
-    # Save animated GIF (12 FPS)
+    # Save animated GIF (15 FPS)
     gif_path = os.path.join(DOCS_IMAGES_DIR, "case_explosion_animation.gif")
-    imageio.mimsave(gif_path, frames, duration=1000 // 12, loop=0)
-    # Also save to renders
-    imageio.mimsave(os.path.join(RENDERS_DIR, "case_explosion_animation.gif"), frames, duration=1000 // 12, loop=0)
+    imageio.mimsave(gif_path, frames, duration=1000 // 15, loop=0)
+    imageio.mimsave(os.path.join(RENDERS_DIR, "case_explosion_animation.gif"), frames, duration=1000 // 15, loop=0)
     print(f"    Saved assembly animation GIF: {gif_path} ({len(frames)} frames)")
 
-    # Save MP4 video via ffmpeg if available
+    # Save MP4 video via ffmpeg / imageio (15 FPS)
     mp4_path = os.path.join(DOCS_IMAGES_DIR, "case_assembly_video.mp4")
     try:
         writer = imageio.get_writer(mp4_path, fps=15, codec="libx264", quality=8)
