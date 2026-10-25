@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GKD Pixel ESP32-S3 Handheld Console - Turnkey Manufacturing Release Generator
+CopperPilot Retro Handheld (ESP32-S3) - Turnkey Manufacturing Release Generator
 Targets Lion Circuits 4-Layer FR-4 Manufacturing and SMT Turnkey PCBA.
 """
 
@@ -322,10 +322,10 @@ def export_bom():
         {
             "Designator": "CASE1",
             "Quantity": 1,
-            "Value": "GKD_Pixel_3D_Case_Kit",
-            "Footprint": "Enclosure:GKD_Pixel_63x80mm",
-            "Manufacturer": "GKD Pixel Custom",
-            "MPN": "GKD-PIXEL-CASE-V1",
+            "Value": "CopperPilot_Retro_Handheld_Case_Kit",
+            "Footprint": "Enclosure:CopperPilot_Retro_Handheld_63x80mm",
+            "Manufacturer": "CopperPilot (in-house design)",
+            "MPN": "CP-RETRO-HANDHELD-CASE-V1",
             "Description": "Full 3D Snap-Fit Enclosure Kit (Front Bezel, Rear Shell, Battery Hatch, D-Pad, ABXY, SE/ST, Shoulders)",
         }
     )
@@ -390,7 +390,7 @@ def export_spec():
     content = """# Lion Circuits Turnkey PCB Fabrication & PCBA Assembly Specification
 
 ## 1. PCB Board Fabrication Parameters
-- **Project Name**: GKD Pixel ESP32-S3 Handheld Gaming Console (`copperpilot-retro-handheld`)
+- **Project Name**: CopperPilot Retro Handheld (ESP32-S3) (`copperpilot-retro-handheld`)
 - **Dimensions**: 63.00 mm x 80.00 mm (Finished unit with R=2.5mm corner radii)
 - **Panelization Strategy**: 63.00 mm x 105.00 mm Carrier Panel (with 2x 12.5mm breakaway tooling rails on 63mm edges, exceeding Lion Circuits 50x100mm conveyor minimum)
 - **Layer Count**: 4-Layer FR-4 (TG140-150)

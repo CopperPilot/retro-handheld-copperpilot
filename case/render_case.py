@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """
-High-Resolution 3D Enclosure & PCBA Assembly Visualization Suite for GKD Pixel Console.
-Generates smooth, anti-aliased engineering renders, exploded views, side-by-side reference
-comparisons, and a realistic step-by-step 3D assembly motion animation (GIF and MP4 video)
+High-Resolution 3D Enclosure & PCBA Assembly Visualization Suite for the CopperPilot Retro Handheld.
+Generates smooth, anti-aliased engineering renders, exploded views, and a realistic step-by-step 3D assembly motion animation (GIF and MP4 video)
 using genuine 3D exports from KiCad (GLB/STL) and parametric CAD models.
 """
 
 import os
 import subprocess
+
 import imageio
 import numpy as np
-from PIL import Image
 import pyvista as pv
 import trimesh
 
@@ -19,7 +18,6 @@ ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 MODELS_DIR = os.path.join(SCRIPT_DIR, "models")
 RENDERS_DIR = os.path.join(SCRIPT_DIR, "renders")
 DOCS_IMAGES_DIR = os.path.join(ROOT_DIR, "docs", "images")
-ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 
 os.makedirs(RENDERS_DIR, exist_ok=True)
 os.makedirs(DOCS_IMAGES_DIR, exist_ok=True)
@@ -36,16 +34,28 @@ def build_scene_assets():
     door = pv.read(os.path.join(MODELS_DIR, "case_battery_door.stl")).compute_normals(
         feature_angle=30.0, split_vertices=True
     )
-    buttons = pv.read(os.path.join(MODELS_DIR, "buttons_dpad_abxy_sest_shoulders.stl")).compute_normals(
-        feature_angle=30.0, split_vertices=True
-    )
+    buttons = pv.read(
+        os.path.join(MODELS_DIR, "buttons_dpad_abxy_sest_shoulders.stl")
+    ).compute_normals(feature_angle=30.0, split_vertices=True)
 
     # 1. Genuine KiCad 3D PCBA with full realistic colors & materials
     glb_path = os.path.join(MODELS_DIR, "copperpilot_retro_handheld_pcb_populated.glb")
     if not os.path.exists(glb_path):
         # Generate on the fly using kicad-cli if missing
         pcb_file = os.path.join(ROOT_DIR, "copperpilot-retro-handheld.kicad_pcb")
-        subprocess.run(["kicad-cli", "pcb", "export", "glb", "--output", glb_path, "--force", pcb_file], check=True)
+        subprocess.run(
+            [
+                "kicad-cli",
+                "pcb",
+                "export",
+                "glb",
+                "--output",
+                glb_path,
+                "--force",
+                pcb_file,
+            ],
+            check=True,
+        )
 
     scene = trimesh.load(glb_path)
     mesh = scene.to_geometry()
@@ -79,7 +89,9 @@ def build_scene_assets():
     display_ribbon = pv.Box(bounds=[-4.0, 4.0, -6.0, -1.8, 5.76, 5.96])
 
     # 3. 1000 mAh Li-Po Battery Pack (26.0 x 38.0 x 6.0 mm) placed in rear cavity
-    battery = pv.Box(bounds=[3.0 - 13.0, 3.0 + 13.0, -8.0 - 19.0, -8.0 + 19.0, -9.0, -3.0])
+    battery = pv.Box(
+        bounds=[3.0 - 13.0, 3.0 + 13.0, -8.0 - 19.0, -8.0 + 19.0, -9.0, -3.0]
+    )
 
     return {
         "front": front,
@@ -97,9 +109,15 @@ def build_scene_assets():
 
 def setup_lighting(plotter):
     """Configures multi-point studio key, fill, and rim lighting for high-end rendering."""
-    key = pv.Light(position=(85, 80, 120), focal_point=(0, 0, 0), color="white", intensity=0.90)
-    fill = pv.Light(position=(-85, -30, 80), focal_point=(0, 0, 0), color="#d8e2ec", intensity=0.45)
-    rim = pv.Light(position=(0, 100, -80), focal_point=(0, 0, 0), color="#ffffff", intensity=0.35)
+    key = pv.Light(
+        position=(85, 80, 120), focal_point=(0, 0, 0), color="white", intensity=0.90
+    )
+    fill = pv.Light(
+        position=(-85, -30, 80), focal_point=(0, 0, 0), color="#d8e2ec", intensity=0.45
+    )
+    rim = pv.Light(
+        position=(0, 100, -80), focal_point=(0, 0, 0), color="#ffffff", intensity=0.35
+    )
     plotter.add_light(key)
     plotter.add_light(fill)
     plotter.add_light(rim)
@@ -113,7 +131,7 @@ def save_render(plotter, filename):
 
 
 def render_front_view(assets):
-    print("==> [1/6] Rendering High-Resolution Front View...")
+    print("==> [1/5] Rendering High-Resolution Front View...")
     p = pv.Plotter(off_screen=True, window_size=[1600, 1600])
     p.set_background("#fbfcfd")
     setup_lighting(p)
@@ -122,9 +140,15 @@ def render_front_view(assets):
     glass = assets["display_glass"].copy()
     buttons = assets["buttons"].copy()
 
-    p.add_mesh(front, color="#747c87", smooth_shading=True, specular=0.4, specular_power=25)
-    p.add_mesh(glass, color="#090a0d", smooth_shading=True, specular=0.85, specular_power=80)
-    p.add_mesh(buttons, color="#22252a", smooth_shading=True, specular=0.3, specular_power=20)
+    p.add_mesh(
+        front, color="#747c87", smooth_shading=True, specular=0.4, specular_power=25
+    )
+    p.add_mesh(
+        glass, color="#090a0d", smooth_shading=True, specular=0.85, specular_power=80
+    )
+    p.add_mesh(
+        buttons, color="#22252a", smooth_shading=True, specular=0.3, specular_power=20
+    )
 
     p.reset_camera()
     p.camera_position = [(0, 0, 160), (0, 0, 0), (0, 1, 0)]
@@ -134,14 +158,16 @@ def render_front_view(assets):
 
 
 def render_rear_view(assets):
-    print("==> [2/6] Rendering High-Resolution Rear Grooved Shell View...")
+    print("==> [2/5] Rendering High-Resolution Rear Grooved Shell View...")
     p = pv.Plotter(off_screen=True, window_size=[1600, 1600])
     p.set_background("#fbfcfd")
     setup_lighting(p)
 
     rear = assets["rear"].copy()
 
-    p.add_mesh(rear, color="#747c87", smooth_shading=True, specular=0.4, specular_power=25)
+    p.add_mesh(
+        rear, color="#747c87", smooth_shading=True, specular=0.4, specular_power=25
+    )
 
     p.reset_camera()
     p.camera_position = [(0, 0, -160), (0, 0, 0), (0, 1, 0)]
@@ -151,7 +177,7 @@ def render_rear_view(assets):
 
 
 def render_isometric_view(assets):
-    print("==> [3/6] Rendering 3/4 Isometric Perspective View...")
+    print("==> [3/5] Rendering 3/4 Isometric Perspective View...")
     p = pv.Plotter(off_screen=True, window_size=[1600, 1600])
     p.set_background("#fbfcfd")
     setup_lighting(p)
@@ -161,10 +187,18 @@ def render_isometric_view(assets):
     buttons = assets["buttons"].copy()
     glass = assets["display_glass"].copy()
 
-    p.add_mesh(front, color="#79818c", smooth_shading=True, specular=0.45, specular_power=30)
-    p.add_mesh(rear, color="#5d636e", smooth_shading=True, specular=0.45, specular_power=30)
-    p.add_mesh(glass, color="#08090b", smooth_shading=True, specular=0.90, specular_power=90)
-    p.add_mesh(buttons, color="#25282e", smooth_shading=True, specular=0.35, specular_power=20)
+    p.add_mesh(
+        front, color="#79818c", smooth_shading=True, specular=0.45, specular_power=30
+    )
+    p.add_mesh(
+        rear, color="#5d636e", smooth_shading=True, specular=0.45, specular_power=30
+    )
+    p.add_mesh(
+        glass, color="#08090b", smooth_shading=True, specular=0.90, specular_power=90
+    )
+    p.add_mesh(
+        buttons, color="#25282e", smooth_shading=True, specular=0.35, specular_power=20
+    )
 
     p.reset_camera()
     p.camera_position = [(85, 45, 125), (0, 0, -3), (0, 1, 0)]
@@ -174,7 +208,7 @@ def render_isometric_view(assets):
 
 
 def render_exploded_view(assets):
-    print("==> [4/6] Rendering Exploded Subsystem Assembly View with KiCad 3D PCBA...")
+    print("==> [4/5] Rendering Exploded Subsystem Assembly View with KiCad 3D PCBA...")
     p = pv.Plotter(off_screen=True, window_size=[1600, 1200])
     p.set_background("#fbfcfd")
     setup_lighting(p)
@@ -220,42 +254,8 @@ def render_exploded_view(assets):
     p.close()
 
 
-def generate_reference_comparisons():
-    print("==> [5/6] Generating Side-by-Side Reference Comparisons...")
-    comparisons = [
-        ("comparison_front.png", "Screenshot 2026-10-23 at 5.48.16 PM.png", "case_render_front.png", "Target Hardware Reference", "3D CAD Enclosure Model"),
-        ("comparison_rear.png", "Screenshot 2026-10-23 at 5.48.12 PM.png", "case_render_rear.png", "Target Hardware Reference", "3D CAD Enclosure Model"),
-        ("comparison_isometric.png", "Screenshot 2026-10-23 at 5.48.22 PM.png", "case_render_isometric.png", "Target Industrial Design", "3D CAD Enclosure Model"),
-    ]
-
-    for out_name, ref_name, render_name, label_ref, label_cad in comparisons:
-        ref_path = os.path.join(ASSETS_DIR, ref_name)
-        render_path = os.path.join(DOCS_IMAGES_DIR, render_name)
-        if not os.path.exists(ref_path) or not os.path.exists(render_path):
-            continue
-
-        im_ref = Image.open(ref_path).convert("RGBA")
-        im_cad = Image.open(render_path).convert("RGBA")
-
-        # Normalize both to height 1000px preserving aspect ratio
-        target_h = 1000
-        w_ref = int(im_ref.width * (target_h / im_ref.height))
-        w_cad = int(im_cad.width * (target_h / im_cad.height))
-        im_ref = im_ref.resize((w_ref, target_h), Image.Resampling.LANCZOS)
-        im_cad = im_cad.resize((w_cad, target_h), Image.Resampling.LANCZOS)
-
-        total_w = w_ref + w_cad + 20
-        combined = Image.new("RGBA", (total_w, target_h), (251, 252, 253, 255))
-        combined.paste(im_ref, (0, 0))
-        combined.paste(im_cad, (w_ref + 20, 0))
-
-        for d in [RENDERS_DIR, DOCS_IMAGES_DIR]:
-            combined.save(os.path.join(d, out_name), quality=95)
-        print(f"    Saved side-by-side comparison {out_name}")
-
-
 def generate_assembly_motion_animation(assets):
-    print("==> [6/6] Generating 3D Sequential Assembly Motion Animation (GIF & MP4)...")
+    print("==> [5/5] Generating 3D Sequential Assembly Motion Animation (GIF & MP4)...")
     p = pv.Plotter(off_screen=True, window_size=[720, 720])
     p.set_background("#f8f9fa")
     setup_lighting(p)
@@ -377,7 +377,12 @@ def generate_assembly_motion_animation(assets):
     # Save animated GIF (15 FPS)
     gif_path = os.path.join(DOCS_IMAGES_DIR, "case_explosion_animation.gif")
     imageio.mimsave(gif_path, frames, duration=1000 // 15, loop=0)
-    imageio.mimsave(os.path.join(RENDERS_DIR, "case_explosion_animation.gif"), frames, duration=1000 // 15, loop=0)
+    imageio.mimsave(
+        os.path.join(RENDERS_DIR, "case_explosion_animation.gif"),
+        frames,
+        duration=1000 // 15,
+        loop=0,
+    )
     print(f"    Saved assembly animation GIF: {gif_path} ({len(frames)} frames)")
 
     # Save MP4 video via ffmpeg / imageio (15 FPS)
@@ -388,20 +393,19 @@ def generate_assembly_motion_animation(assets):
             writer.append_data(f)
         writer.close()
         print(f"    Saved assembly MP4 video: {mp4_path}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - MP4 export is best-effort; the GIF is already saved
         print(f"    Video encoding fallback: {e}")
 
 
 def main():
     print("======================================================================")
-    print("GKD Pixel Console: High-Resolution 3D Visualization Pipeline")
+    print("CopperPilot Retro Handheld: High-Resolution 3D Visualization Pipeline")
     print("======================================================================")
     assets = build_scene_assets()
     render_front_view(assets)
     render_rear_view(assets)
     render_isometric_view(assets)
     render_exploded_view(assets)
-    generate_reference_comparisons()
     generate_assembly_motion_animation(assets)
     print("======================================================================")
     print("ALL VISUAL ASSETS GENERATED SUCCESSFULLY!")

@@ -1,5 +1,5 @@
 # ==============================================================================
-# GKD Pixel ESP32-S3 Handheld Console - Unified Root Build & Verification Makefile
+# CopperPilot Retro Handheld (ESP32-S3) - Unified Root Build & Verification Makefile
 # ==============================================================================
 
 PROJECT_NAME := copperpilot-retro-handheld
@@ -13,7 +13,7 @@ RELEASE_ZIP  := $(BUILD_DIR)/$(PROJECT_NAME)_LionCircuits_Release.zip
 UV           := $(shell command -v uv 2>/dev/null || echo "$$HOME/.local/bin/uv")
 ifneq ($(wildcard $(UV)),)
 PYTHON       ?= $(UV) run --with pytest --with trimesh --with numpy --with matplotlib --with Pillow python
-PYTEST       ?= $(UV) run --with pytest --with trimesh --with numpy pytest
+PYTEST       ?= $(UV) run --with pytest --with trimesh --with numpy --with scipy --with networkx --with rtree --with manifold3d --with python-fcl pytest
 else
 PYTHON       ?= python3
 PYTEST       ?= $(shell if python3 -m pytest --version >/dev/null 2>&1; then echo "python3 -m pytest"; else echo "pytest"; fi)
@@ -28,10 +28,10 @@ all: fmt-check lint test
 
 help:
 	@echo "======================================================================"
-	@echo "GKD Pixel ESP32-S3 Handheld Console - Build & Verification System"
+	@echo "CopperPilot Retro Handheld (ESP32-S3) - Build & Verification System"
 	@echo "======================================================================"
 	@echo "Verification Targets:"
-	@echo "  make test        - Run full 35-point automated test suite (PyTest PCB + 3D Enclosure)"
+	@echo "  make test        - Run full 51-point automated test suite (PCB + 3D enclosure + assembly)"
 	@echo "  make test-pcb    - Run 25-point automated PCB hardware verification suite"
 	@echo "  make test-case   - Run 15-point automated 3D mechanical enclosure suite"
 	@echo "  make drc         - Run KiCad CLI Design Rule Check on PCB layout (asserts 0 errors, 100% routed)"
