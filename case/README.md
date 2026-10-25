@@ -1,10 +1,10 @@
-# GKD Pixel Style Parametric 3D Snap-Fit Enclosure
+# CopperPilot Retro Handheld: Parametric 3D Snap-Fit Enclosure
 
 [![CAD Status](https://img.shields.io/badge/CAD-Trimesh%20Parametric%20CSG-brightgreen.svg)](generate_case.py)
 [![Test Suite](https://img.shields.io/badge/Tests-15%2F15%20Passed-success.svg)](../tests/test_case.py)
 [![3D Print Ready](https://img.shields.io/badge/Print-FDM%20PETG%20%2F%20SLA%20Resin-blue.svg)](#3d-printing--fabrication-guidelines)
 
-A custom, snap-fit handheld console enclosure engineered specifically for the 63.00 mm x 80.00 mm ESP32-S3 retro gaming PCB. Styled after the iconic **GKD Pixel** ultra-compact handheld, the enclosure features a precision front bezel with recessed display viewport, 14 rear vertical heat-dissipation and ergonomics grip grooves, dual bottom wrist lanyard attachment bars, a snap-locking removable Li-Po battery compartment hatch, and floating button keycaps.
+A custom, snap-fit handheld console enclosure engineered specifically for the 63.00 mm x 80.00 mm ESP32-S3 retro gaming PCB. The enclosure features a precision front bezel with recessed display viewport, 14 rear vertical heat-dissipation and ergonomics grip grooves, dual bottom wrist lanyard attachment bars, a snap-locking removable Li-Po battery compartment hatch, and floating button keycaps.
 
 ---
 

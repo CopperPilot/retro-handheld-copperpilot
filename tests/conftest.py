@@ -1,4 +1,4 @@
-"""Pytest fixtures and S-expression parsers for GKD Pixel ESP32-S3 Handheld Console PCB."""
+"""Pytest fixtures and S-expression parsers for CopperPilot Retro Handheld (ESP32-S3) PCB."""
 
 import json
 import math

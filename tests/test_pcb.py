@@ -1,4 +1,4 @@
-"""Automated 25-point hardware verification test suite for GKD Pixel ESP32-S3 Handheld Console PCB."""
+"""Automated 25-point hardware verification test suite for CopperPilot Retro Handheld (ESP32-S3) PCB."""
 
 import os
 

@@ -1,29 +1,31 @@
-# GKD Pixel Style Handheld Gaming Console: 4-Layer ESP32-S3 Hardware
+# CopperPilot Retro Handheld: 4-Layer ESP32-S3 Handheld Console Hardware
 
 [![KiCad EDA](https://img.shields.io/badge/KiCad-v10.0.4-brightgreen.svg)](copperpilot-retro-handheld.kicad_pro)
 [![DRC Status](https://img.shields.io/badge/DRC-Zero%20Errors%20%7C%20100%25%20Routed-brightgreen.svg)](copperpilot-retro-handheld.kicad_pcb)
 [![ERC Status](https://img.shields.io/badge/ERC-Zero%20Errors-brightgreen.svg)](copperpilot-retro-handheld.kicad_sch)
 [![Lion Circuits Turnkey](https://img.shields.io/badge/Fab-Lion%20Circuits%204--Layer-orange.svg)](#lion-circuits-4-layer-manufacturing--pcba-specifications)
 [![3D Enclosure](https://img.shields.io/badge/Case-Watertight%20Snap--Fit%20STLs-blue.svg)](case/)
-[![Automated Tests](https://img.shields.io/badge/Tests-50%2F50%20Passed-success.svg)](tests/)
+[![Automated Tests](https://img.shields.io/badge/Tests-51%2F51%20Passed-success.svg)](tests/)
 
-An ultra-compact, high-performance, single-board retro handheld gaming console built on a precision 4-layer FR-4 PCB with an engineered snap-fit enclosure inspired by the iconic **GKD Pixel** micro-handheld form factor (**63.00 mm x 80.00 mm**). Powered by an Espressif ESP32-S3 dual-core microcontroller, the console features a high-refresh 2.4-inch 320x240 ILI9341 SPI color TFT display, 14 responsive gameplay and shoulder pushbuttons, integrated USB-C charging and native USB-OTG/JTAG programming, automatic load-sharing battery power management for uninterrupted gameplay while charging, and a removable 1000 mAh Li-Po cell.
+The CopperPilot Retro Handheld is an ultra-compact, single-board retro handheld console design built on a 4-layer FR-4 PCB (**63.00 mm x 80.00 mm**) with a parametric snap-fit enclosure. Built around an Espressif ESP32-S3 dual-core microcontroller, the hardware features a 2.4-inch 320x240 ILI9341 SPI color TFT display, 14 responsive gameplay and shoulder pushbuttons, integrated USB-C charging and native USB-OTG/JTAG programming, automatic load-sharing battery power management for uninterrupted gameplay while charging, and a removable 1000 mAh Li-Po cell.
+
+> **Project status:** this repository contains the hardware (schematic, PCB, enclosure CAD, and manufacturing outputs) only. There is **no firmware yet**, so no frame rates, emulator compatibility, or battery runtime have been measured on this board.
 
 ---
 
 ## 3D Enclosure & Industrial Design Showcase
 
-### Side-by-Side Verification: Target Hardware Reference vs 3D CAD Model
+### 3D CAD Enclosure Renders
 
-| Front Face & Controls Comparison | Rear Shell & Grip Channels Comparison |
+| Front Face & Controls | Rear Shell & Grip Channels |
 | :---: | :---: |
-| ![Front Comparison](docs/images/comparison_front.png) | ![Rear Comparison](docs/images/comparison_rear.png) |
-| **Target Hardware Reference** *(Left)* vs **3D CAD Model** *(Right)* | **Target Hardware Reference** *(Left)* vs **3D CAD Model** *(Right)* |
+| ![Front Render](docs/images/case_render_front.png) | ![Rear Render](docs/images/case_render_rear.png) |
+| **Front bezel, display window & keycaps** | **Rear grooved shell & battery hatch** |
 
-| 3/4 Isometric Industrial Design Comparison | Exploded Subsystem Assembly |
+| 3/4 Isometric View | Exploded Subsystem Assembly |
 | :---: | :---: |
-| ![Isometric Comparison](docs/images/comparison_isometric.png) | ![Exploded View](docs/images/case_render_exploded.png) |
-| **Industrial Form Factor** *(Left)* vs **CAD Model** *(Right)* | **Front Bezel, PCBA, Floating Keycaps, Rear Shell & Door** |
+| ![Isometric Render](docs/images/case_render_isometric.png) | ![Exploded View](docs/images/case_render_exploded.png) |
+| **Assembled enclosure** | **Front Bezel, PCBA, Floating Keycaps, Rear Shell & Door** |
 
 ### Complete 3D Assembly Motion Animation (GIF & MP4)
 
@@ -102,12 +104,10 @@ An ultra-compact, high-performance, single-board retro handheld gaming console b
 
 - **Chassis & Form Factor**: 63.00 mm x 80.00 mm ultra-compact 4-layer FR-4 PCB with R=2.50 mm corner radii, 4 precision 2.20 mm alignment holes (`H1`–`H4`), and 4 through-PCB snap-hook retention notches (`SL1`, `SL2`, `SR1`, `SR2`).
 - **Core Processing Unit**: Espressif ESP32-S3-WROOM-1-N8R2 (dual-core 32-bit Xtensa LX7 @ 240 MHz, 512 KB internal SRAM, 8 MB Quad-SPI Flash, 2 MB Quad-SPI PSRAM, 2.4 GHz 802.11 b/g/n Wi-Fi + Bluetooth 5.0 LE).
-  - **Computation Headroom for Games (Snake, Bomberman, 2D Retro Engines)**:
-    - Dedicated hardware FSPI (SPI2) with direct DMA transfers running at up to 80 MHz.
-    - Full double-buffered RGB565 framebuffer ($320 \times 240 \times 2 = 150\text{ KB}$ per buffer, $300\text{ KB}$ total) occupies only 15% of the 2 MB PSRAM.
-    - At 80 MHz SPI clock, frame delivery takes only $15.36\text{ ms}$, delivering a rock-solid **65.1 FPS** asynchronously via DMA.
-    - Native 2D game engines (Snake, Bomberman, Pac-Man, Tetris) require $<8\%$ CPU load on Core 0; Core 1 remains free for wireless multiplayer or background tasks.
-    - Emulators (Peanut-GB, gnuboy) achieve 100% full-speed **60 FPS** classic 8-bit handheld emulation at ~25% CPU utilization.
+  - **Game & Emulator Capability (not yet verified on this board)**: There is no firmware for this board yet, so no frame rates or emulator results are claimed here. The figures below are design-level estimates and third-party reports from other ESP32-S3 hardware, cited for reference only:
+    - Display link: the ESP32-S3 SPI2 (FSPI) peripheral supports DMA transfers. A full 320x240 RGB565 frame is 150 KB (300 KB double-buffered, well within the 2 MB PSRAM). Achievable frame rate depends on the SPI clock the ILI9341 panel and cabling sustain in practice (commonly 40 MHz). The [esp-box-emu](https://github.com/esp-cpp/esp-box-emu) project reports a "~31 fps ceiling" for 320x240x16bpp output on its ESP32-S3 panel.
+    - Emulators on other ESP32-S3 devices: [esp-box-emu](https://github.com/esp-cpp/esp-box-emu) runs NES (nofrendo), Game Boy / Game Boy Color (gnuboy), Sega Master System / Game Gear, Genesis and Doom on the ESP32-S3-BOX. [Retro-Go](https://github.com/ducalex/retro-go) supports NES, Game Boy / Color, Master System, Game Gear, PC Engine and more on ESP32 handhelds, with ESP32-S3 community ports. [PaperBoy S3](https://www.tomshardware.com/video-games/retro-gaming/designer-turns-niche-e-ink-dev-board-into-a-60hz-game-boy-handheld-960x540-display-powered-by-ultra-low-cost-esp32-s3-microcontroller) (Tom's Hardware) runs a Game Boy emulator on an ESP32-S3, with the chip fully loaded.
+    - These results come from different hardware and firmware. Performance on this board has to be measured once firmware exists.
     - *Audio note*: The board does not integrate an analog audio amplifier or speaker. Audio is supported wirelessly via Bluetooth 5.0 LE / A2DP or via external PWM buzzer on spare GPIO.
 - **Display Subsystem & Connector `J3`**:
   - **Board-Mounted SMT Socket (`J3`)**: JST Sales America `SM10B-GHS-TB(LF)(SN)` (10-position 1.25 mm pitch horizontal SMD header with solder retention tabs).
@@ -119,7 +119,7 @@ An ultra-compact, high-performance, single-board retro handheld gaming console b
   - Automatic dynamic load sharing via AO3401A P-channel MOSFET (`Q1`, $R_{DS(on)} < 50\text{ m}\Omega$) and MBR0520 Schottky barrier diode (`D2`, $V_F = 0.38\text{ V}$). When 5V USB-C is plugged in, the system runs directly off USB power while the battery charges undisturbed at its full C-rate; upon disconnect, the MOSFET transparently switches system load back to battery without voltage droop.
   - Diodes Inc. AP2112K-3.3 ultra-low-dropout 600 mA CMOS regulator with 250 mV dropout voltage, powering the console reliably down to 3.55 V battery cutoff.
   - Precision 100 kΩ / 100 kΩ 1% resistor divider (`R8`, `R9`) with 100 nF smoothing capacitor (`C6`) on ESP32-S3 `ADC1_CH0` (GPIO1) for fuel gauge battery telemetry.
-  - Typical system consumption: ~220 mA @ 3.3V (~0.73W) with display backlight at 100% and CPU at 240 MHz. On a 1000 mAh Li-Po cell, runtime is **4.5 hours** of continuous gaming.
+  - Estimated system consumption (design estimate, not measured): ~220 mA @ 3.3V (~0.73W) with display backlight at 100% and CPU at 240 MHz, which would give roughly 4.5 hours from a 1000 mAh Li-Po cell.
 - **Controls & Non-Colliding 3D Keycaps**:
   - 14 front-mounted tactile switches with 10 kΩ pull-up networks:
     - 4-way D-Pad (`UP`, `DOWN`, `LEFT`, `RIGHT`) centered at (14.65, 60.96 mm).
@@ -173,7 +173,7 @@ The hardware has been validated against Lion Circuits India turnkey PCBA design 
 | 16 | `SW14`-`SW17` | 4 | Ultra-Small Tactile Switches | Omron Electronics | `B3U-3000P` | 3.0x2.5mm SMD | DigiKey / Mouser |
 | 17 | `DISP1` | 1 | 2.4" 320x240 ILI9341 SPI TFT | Waveshare / EastRising | `15933` / `ER-TFT024-3` | 2.4" Module + Cable | DigiKey / LCSC / Waveshare |
 | 18 | `BT1` | 1 | 3.7V 1000mAh 1S Li-Po Cell | PKCELL / Adafruit | `LP803040` / `ID 258` | 40x30x8.0mm JST-PH | DigiKey / Adafruit |
-| 19 | `CASE1` | 1 | GKD Pixel 3D Snap-Fit Case Kit | GKD Pixel Custom | `GKD-PIXEL-CASE-V1` | 3D Watertight Enclosure | 3D Printed / Molded |
+| 19 | `CASE1` | 1 | CopperPilot Retro Handheld 3D Snap-Fit Case Kit | CopperPilot (in-house design) | `CP-RETRO-HANDHELD-CASE-V1` | 3D Watertight Enclosure | 3D Printed / Molded |
 | 20-34 | `C1`-`C15` | 15 | Ceramic MLCC Decoupling | Yageo / Murata | 100nF, 1uF, 4.7uF, 10uF, 22uF | 0603 & 0805 | DigiKey / LCSC |
 | 35-45 | `R1`-`R30` | 30 | Precision Chip Resistors | Yageo / Vishay | 10, 22, 1k, 2k 1%, 5.1k, 10k, 100k 1% | 0603 & 0805 | DigiKey / LCSC |
 
@@ -184,7 +184,7 @@ The hardware has been validated against Lion Circuits India turnkey PCBA design 
 The repository includes a **51-point automated PyTest hardware, assembly, and enclosure verification suite**:
 
 ```bash
-$ /home/aditya/.local/bin/uv run pytest -v
+$ make test
 ============================= test session starts ==============================
 platform linux -- Python 3.13.9, pytest-9.1.1
 collected 51 items
@@ -204,7 +204,7 @@ tests/test_case.py::TestCaseFiles::test_stl_file_exists[case_front_bezel.stl] PA
 tests/test_case.py::TestCaseFiles::test_stl_file_exists[case_rear_grooved.stl] PASSED
 tests/test_case.py::TestCaseFiles::test_stl_file_exists[case_battery_door.stl] PASSED
 tests/test_case.py::TestCaseFiles::test_stl_file_exists[buttons_dpad_abxy_sest_shoulders.stl] PASSED
-tests/test_case.py::TestCaseFiles::test_stl_file_exists[gkd_pixel_console_assembly.stl] PASSED
+tests/test_case.py::TestCaseFiles::test_stl_file_exists[copperpilot_retro_handheld_assembly.stl] PASSED
 tests/test_case.py::TestCaseGeometry::test_front_bezel_envelope PASSED
 tests/test_case.py::TestCaseGeometry::test_rear_shell_envelope PASSED
 tests/test_case.py::TestCaseGeometry::test_battery_door_envelope PASSED
@@ -241,7 +241,7 @@ tests/test_pcb.py::Test3DModelsAndSilkscreen::test_all_footprints_have_3d_models
 tests/test_pcb.py::Test3DModelsAndSilkscreen::test_no_legacy_kicad_env_vars PASSED
 tests/test_pcb.py::Test3DModelsAndSilkscreen::test_pin1_polarity_indicators PASSED
 
-============================== 47 passed in 3.45s ==============================
+============================== 51 passed ==============================
 ```
 
 ---
@@ -278,13 +278,11 @@ tests/test_pcb.py::Test3DModelsAndSilkscreen::test_pin1_polarity_indicators PASS
 │   │   ├── case_rear_grooved.stl       # Rear shell with 14 grip channels & snap catch pockets
 │   │   ├── case_battery_door.stl       # Removable battery bay hatch with retention lip
 │   │   ├── buttons_dpad_abxy_*.stl     # Complete set of floating button keycaps (>1.2mm gap)
-│   │   └── gkd_pixel_console_assembly.stl # Full mated console assembly
+│   │   └── copperpilot_retro_handheld_assembly.stl # Full mated console assembly
 │   └── renders/                        # Multi-view isometric, front, rear, and exploded renders
 └── docs/
-    └── images/                         # Documentation visual assets, comparisons and animations
-        ├── comparison_front.png        # Side-by-side reference vs 3D CAD model (Front)
-        ├── comparison_rear.png         # Side-by-side reference vs 3D CAD model (Rear)
-        ├── comparison_isometric.png   # Side-by-side reference vs 3D CAD model (Isometric)
+    └── images/                         # Documentation renders and animations
+        ├── case_render_*.png           # Front, rear, isometric & exploded CAD renders
         ├── case_explosion_animation.gif# 64-frame 3D sequential assembly motion animation
         └── case_assembly_video.mp4     # High-definition MP4 assembly video asset
 ```
@@ -297,8 +295,8 @@ Ensure `kicad-cli` (v10.0+) and Python 3.10+ (with `uv`) are available in your p
 
 ### 1. Run Automated Verification & Rule Checks
 ```bash
-# Run full 47-point PyTest verification suite
-/home/aditya/.local/bin/uv run pytest -v
+# Run full 51-point PyTest verification suite (installs test deps via uv)
+make test
 
 # Run electrical rule check (ERC) via KiCad CLI
 kicad-cli sch erc copperpilot-retro-handheld.kicad_sch
@@ -310,14 +308,14 @@ kicad-cli pcb drc copperpilot-retro-handheld.kicad_pcb
 ### 2. Generate 3D CAD Enclosure STLs and Visuals
 ```bash
 # Generate watertight STL models
-/home/aditya/.local/bin/uv run case/generate_case.py
+make build-case
 
-# Render smooth anti-aliased images, comparisons, and assembly animation
-/home/aditya/.local/bin/uv run case/render_case.py
+# Render smooth anti-aliased images and assembly animation
+make render-case
 ```
 
 ### 3. Generate Turnkey Manufacturing Release Bundle
 ```bash
 # Generate gerbers, drill, CPL, structured BOM, and release zip
-/home/aditya/.local/bin/uv run export_manufacturing.py
+make fab
 ```

@@ -1,5 +1,5 @@
 """
-End-to-End Assembly & Volumetric Clearances Verification Test Suite for GKD Pixel Handheld Console.
+End-to-End Assembly & Volumetric Clearances Verification Test Suite for the CopperPilot Retro Handheld.
 Validates the complete physical assembly sequence and kinematics across all 6 subsystems:
   Stage 1: Bare PCB -> SMT/TH PCBA Component Loading (74 components)
   Stage 2: KiCad 3D Exported Mesh Verification (copperpilot_retro_handheld_pcb_populated.stl & .glb)
@@ -15,13 +15,14 @@ Validates the complete physical assembly sequence and kinematics across all 6 su
 
 import os
 import re
+
 import numpy as np
 import pytest
 
 try:
     import trimesh
-    from trimesh.creation import box, cylinder
     from trimesh.collision import CollisionManager
+    from trimesh.creation import box
 except ImportError:
     trimesh = None
     CollisionManager = None
@@ -48,7 +49,7 @@ def pcb_footprint_data():
 
         ref_m = re.search(r'\(property\s+"Reference"\s+"([^"]+)"', block)
         layer_m = re.search(r'\(layer\s+"([^"]+)"\)', block)
-        at_m = re.search(r'\(at\s+([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?\)', block)
+        at_m = re.search(r"\(at\s+([-\d.]+)\s+([-\d.]+)(?:\s+([-\d.]+))?\)", block)
         val_m = re.search(r'\(property\s+"Value"\s+"([^"]+)"', block)
 
         if ref_m and at_m and layer_m:
@@ -71,7 +72,9 @@ def case_meshes():
         pytest.skip("trimesh not installed")
 
     # Load PCB STL and transform into Case centered coordinate frame
-    pcb_stl_path = os.path.join(MODELS_DIR, "copperpilot_retro_handheld_pcb_populated.stl")
+    pcb_stl_path = os.path.join(
+        MODELS_DIR, "copperpilot_retro_handheld_pcb_populated.stl"
+    )
     pcb = trimesh.load(pcb_stl_path)
     # KiCad STL X: [0, 63], Y: [-80, 0] -> Case X: [-31.5, 31.5], Y: [-40, 40]
     pcb.apply_translation([-31.5, 40.0, 0.0])
@@ -80,8 +83,12 @@ def case_meshes():
         "front": trimesh.load(os.path.join(MODELS_DIR, "case_front_bezel.stl")),
         "rear": trimesh.load(os.path.join(MODELS_DIR, "case_rear_grooved.stl")),
         "door": trimesh.load(os.path.join(MODELS_DIR, "case_battery_door.stl")),
-        "buttons": trimesh.load(os.path.join(MODELS_DIR, "buttons_dpad_abxy_sest_shoulders.stl")),
-        "assembly": trimesh.load(os.path.join(MODELS_DIR, "gkd_pixel_console_assembly.stl")),
+        "buttons": trimesh.load(
+            os.path.join(MODELS_DIR, "buttons_dpad_abxy_sest_shoulders.stl")
+        ),
+        "assembly": trimesh.load(
+            os.path.join(MODELS_DIR, "copperpilot_retro_handheld_assembly.stl")
+        ),
         "pcb": pcb,
     }
 
@@ -91,7 +98,9 @@ class TestEndToEndAssemblySequence:
 
     def test_stage1_pcba_component_loading(self, pcb_footprint_data):
         """Stage 1: Verify all 74 components populate onto PCB within board boundary (63x80mm)."""
-        assert len(pcb_footprint_data) >= 70, f"Expected >=70 footprints, got {len(pcb_footprint_data)}"
+        assert len(pcb_footprint_data) >= 70, (
+            f"Expected >=70 footprints, got {len(pcb_footprint_data)}"
+        )
 
         # Front controls: 14 switches and display connector J3 on F.Cu
         for ref in [f"SW{i}" for i in range(4, 18)]:
@@ -108,8 +117,12 @@ class TestEndToEndAssemblySequence:
 
         # All components physically inside 63.0 x 80.0 mm board boundary
         for ref, fp in pcb_footprint_data.items():
-            assert 0.0 <= fp["x"] <= 63.0, f"{ref} X={fp['x']:.2f} is outside board width [0, 63]"
-            assert 0.0 <= fp["y"] <= 80.0, f"{ref} Y={fp['y']:.2f} is outside board height [0, 80]"
+            assert 0.0 <= fp["x"] <= 63.0, (
+                f"{ref} X={fp['x']:.2f} is outside board width [0, 63]"
+            )
+            assert 0.0 <= fp["y"] <= 80.0, (
+                f"{ref} Y={fp['y']:.2f} is outside board height [0, 80]"
+            )
 
     def test_stage2_kicad_3d_pcba_mesh_validation(self, case_meshes):
         """Stage 2: Verify the genuine KiCad-exported 3D PCB mesh geometry, mounting holes, and component heights."""
@@ -122,11 +135,17 @@ class TestEndToEndAssemblySequence:
         assert 79.8 <= extents[1] <= 80.5, f"PCB height {extents[1]:.2f} mm mismatch"
 
         # Z-depth: B.Cu components extend down to ~-4.9 mm, F.Cu components extend up to ~+5.9 mm
-        assert bounds[0][2] <= -4.5, f"B.Cu component height {bounds[0][2]:.2f} mm is unexpectedly shallow"
-        assert bounds[1][2] >= 5.5, f"F.Cu component height {bounds[1][2]:.2f} mm is unexpectedly low"
+        assert bounds[0][2] <= -4.5, (
+            f"B.Cu component height {bounds[0][2]:.2f} mm is unexpectedly shallow"
+        )
+        assert bounds[1][2] >= 5.5, (
+            f"F.Cu component height {bounds[1][2]:.2f} mm is unexpectedly low"
+        )
 
         # Mesh must be substantial with >10,000 faces representing all populated 3D models
-        assert len(pcb.faces) > 10000, f"KiCad PCB mesh has only {len(pcb.faces)} faces, expected populated models"
+        assert len(pcb.faces) > 10000, (
+            f"KiCad PCB mesh has only {len(pcb.faces)} faces, expected populated models"
+        )
 
     def test_stage3_buttons_clearance_and_zero_collision(self, case_meshes):
         """Stage 3: Verify all gamepad buttons have zero self-collision and maintain >=0.90 mm clearance."""
@@ -151,7 +170,9 @@ class TestEndToEndAssemblySequence:
                     used.add(j)
             buttons.append(trimesh.util.concatenate(grp))
 
-        assert len(buttons) == 11, f"Expected 11 distinct button assemblies, found {len(buttons)}"
+        assert len(buttons) == 11, (
+            f"Expected 11 distinct button assemblies, found {len(buttons)}"
+        )
 
         # Verify pairwise clearance between all distinct button assemblies using CollisionManager
         for i in range(len(buttons)):
@@ -160,9 +181,13 @@ class TestEndToEndAssemblySequence:
                 mgr = CollisionManager()
                 mgr.add_object("b1", b1)
                 mgr.add_object("b2", b2)
-                assert not mgr.in_collision_internal(), f"Button {i} and {j} are in collision"
+                assert not mgr.in_collision_internal(), (
+                    f"Button {i} and {j} are in collision"
+                )
                 dist = mgr.min_distance_internal()
-                assert dist >= 0.90, f"Button {i} and {j} have clearance {dist:.3f} mm < 0.90 mm"
+                assert dist >= 0.90, (
+                    f"Button {i} and {j} have clearance {dist:.3f} mm < 0.90 mm"
+                )
 
     def test_stage4_buttons_seat_onto_pcba_zero_collision(self, case_meshes):
         """Stage 4: Verify seated gamepad keycaps directly contact switch actuators with zero penetration."""
@@ -172,9 +197,13 @@ class TestEndToEndAssemblySequence:
         mgr = CollisionManager()
         mgr.add_object("buttons", buttons)
         mgr.add_object("pcb", pcb)
-        assert not mgr.in_collision_internal(), "Gamepad keycaps collide with PCBA tactile switches"
+        assert not mgr.in_collision_internal(), (
+            "Gamepad keycaps collide with PCBA tactile switches"
+        )
         min_dist = mgr.min_distance_internal()
-        assert min_dist >= 0.05, f"Keycap to tactile switch clearance {min_dist:.3f} mm < 0.05 mm"
+        assert min_dist >= 0.05, (
+            f"Keycap to tactile switch clearance {min_dist:.3f} mm < 0.05 mm"
+        )
 
     def test_stage5_buttons_seat_in_front_bezel_zero_collision(self, case_meshes):
         """Stage 5: Verify seated buttons inside the front bezel cutouts have zero volumetric collision."""
@@ -184,9 +213,13 @@ class TestEndToEndAssemblySequence:
         mgr = CollisionManager()
         mgr.add_object("front", front)
         mgr.add_object("buttons", buttons)
-        assert not mgr.in_collision_internal(), "Seated buttons collide with front bezel housing"
+        assert not mgr.in_collision_internal(), (
+            "Seated buttons collide with front bezel housing"
+        )
         min_dist = mgr.min_distance_internal()
-        assert min_dist >= 0.35, f"Button bore radial clearance {min_dist:.3f} mm is below 0.35 mm"
+        assert min_dist >= 0.35, (
+            f"Button bore radial clearance {min_dist:.3f} mm is below 0.35 mm"
+        )
 
     def test_stage6_display_shelf_mating_and_j3_interconnect(self, case_meshes):
         """Stage 6: Verify 2.4-inch display panel module seats into front bezel and connects to J3 without interference."""
@@ -203,14 +236,20 @@ class TestEndToEndAssemblySequence:
         m_pcb = CollisionManager()
         m_pcb.add_object("display", display)
         m_pcb.add_object("pcb", pcb)
-        assert not m_pcb.in_collision_internal(), "Display module collides with PCB components"
-        assert m_pcb.min_distance_internal() >= 0.10, "Display PCB clearance over board is too tight"
+        assert not m_pcb.in_collision_internal(), (
+            "Display module collides with PCB components"
+        )
+        assert m_pcb.min_distance_internal() >= 0.10, (
+            "Display PCB clearance over board is too tight"
+        )
 
         # Verify display vs Front Bezel (seats inside internal shelf)
         m_front = CollisionManager()
         m_front.add_object("display", display)
         m_front.add_object("front", front)
-        assert not m_front.in_collision_internal(), "Display module collides with front bezel shelf"
+        assert not m_front.in_collision_internal(), (
+            "Display module collides with front bezel shelf"
+        )
 
     def test_stage7_pcba_mating_to_front_bezel_zero_collision(self, case_meshes):
         """Stage 7: Verify populated KiCad PCBA seats against front bezel with zero volumetric collision."""
@@ -220,13 +259,17 @@ class TestEndToEndAssemblySequence:
         mgr = CollisionManager()
         mgr.add_object("front", front)
         mgr.add_object("pcb", pcb)
-        assert not mgr.in_collision_internal(), "Populated KiCad PCBA collides with front bezel"
+        assert not mgr.in_collision_internal(), (
+            "Populated KiCad PCBA collides with front bezel"
+        )
 
         # Verify alignment pins (H1-H4) radial clearance
         pin_dia = 2.00
         hole_dia = 2.20
         radial_clearance = (hole_dia - pin_dia) / 2
-        assert radial_clearance >= 0.08, f"Pin-to-hole clearance {radial_clearance:.2f} mm is too tight"
+        assert radial_clearance >= 0.08, (
+            f"Pin-to-hole clearance {radial_clearance:.2f} mm is too tight"
+        )
 
     def test_stage8_rear_shell_mating_over_pcb_zero_collision(self, case_meshes):
         """Stage 8: Verify grooved rear shell seats over populated PCBA with zero volumetric collision."""
@@ -236,7 +279,9 @@ class TestEndToEndAssemblySequence:
         mgr = CollisionManager()
         mgr.add_object("rear", rear)
         mgr.add_object("pcb", pcb)
-        assert not mgr.in_collision_internal(), "Rear grooved shell collides with populated KiCad PCBA"
+        assert not mgr.in_collision_internal(), (
+            "Rear grooved shell collides with populated KiCad PCBA"
+        )
 
     def test_stage9_battery_seating_and_rear_cavity_fit(self, case_meshes):
         """Stage 9: Verify 1000 mAh Li-Po cell fits into rear cavity without interfering with PCB or rear housing."""
@@ -250,13 +295,19 @@ class TestEndToEndAssemblySequence:
         m_pcb.add_object("bat", bat)
         m_pcb.add_object("pcb", pcb)
         assert not m_pcb.in_collision_internal(), "Battery collides with PCB components"
-        assert m_pcb.min_distance_internal() >= 1.0, "Battery clearance to PCB components < 1.0 mm"
+        assert m_pcb.min_distance_internal() >= 1.0, (
+            "Battery clearance to PCB components < 1.0 mm"
+        )
 
         m_rear = CollisionManager()
         m_rear.add_object("bat", bat)
         m_rear.add_object("rear", rear)
-        assert not m_rear.in_collision_internal(), "Battery collides with rear housing shell"
-        assert m_rear.min_distance_internal() >= 0.40, "Battery clearance to rear wall < 0.40 mm"
+        assert not m_rear.in_collision_internal(), (
+            "Battery collides with rear housing shell"
+        )
+        assert m_rear.min_distance_internal() >= 0.40, (
+            "Battery clearance to rear wall < 0.40 mm"
+        )
 
     def test_stage10_continuous_kinematic_assembly_trajectories(self, case_meshes):
         """Stage 10: Verify multi-step continuous collision clearance along all physical assembly flight paths."""
@@ -279,7 +330,9 @@ class TestEndToEndAssemblySequence:
             m = CollisionManager()
             m.add_object("pcb", pcb)
             m.add_object("b", b_step)
-            assert not m.in_collision_internal(), f"Buttons collided with PCB at trajectory Z = {z:.1f} mm"
+            assert not m.in_collision_internal(), (
+                f"Buttons collided with PCB at trajectory Z = {z:.1f} mm"
+            )
 
         # Approach Vector 2: Display module descends from +Z = 60.0 mm to Z = 0.0 mm onto PCB + Buttons
         for z in np.linspace(60.0, 0.0, 13):
@@ -289,7 +342,9 @@ class TestEndToEndAssemblySequence:
             m.add_object("pcb", pcb)
             m.add_object("b", buttons)
             m.add_object("d", d_step)
-            assert not m.in_collision_internal(), f"Display collided with assembly at trajectory Z = {z:.1f} mm"
+            assert not m.in_collision_internal(), (
+                f"Display collided with assembly at trajectory Z = {z:.1f} mm"
+            )
 
         # Approach Vector 3: Front Bezel lowers from +Z = 60.0 mm to Z = 0.0 mm over PCB + Buttons + Display
         for z in np.linspace(60.0, 0.0, 13):
@@ -300,7 +355,9 @@ class TestEndToEndAssemblySequence:
             m.add_object("b", buttons)
             m.add_object("d", display)
             m.add_object("f", f_step)
-            assert not m.in_collision_internal(), f"Front bezel collided with assembly at trajectory Z = {z:.1f} mm"
+            assert not m.in_collision_internal(), (
+                f"Front bezel collided with assembly at trajectory Z = {z:.1f} mm"
+            )
 
         # Approach Vector 4: Battery pack inserts from -Z = -50.0 mm to Z = 0.0 mm into rear cavity
         for z in np.linspace(-50.0, 0.0, 11):
@@ -309,7 +366,9 @@ class TestEndToEndAssemblySequence:
             m = CollisionManager()
             m.add_object("pcb", pcb)
             m.add_object("bat", bat_step)
-            assert not m.in_collision_internal(), f"Battery collided with PCB at trajectory Z = {z:.1f} mm"
+            assert not m.in_collision_internal(), (
+                f"Battery collided with PCB at trajectory Z = {z:.1f} mm"
+            )
 
         # Approach Vector 5: Rear Housing closes from -Z = -60.0 mm to Z = 0.0 mm over assembly
         for z in np.linspace(-60.0, 0.0, 13):
@@ -320,7 +379,9 @@ class TestEndToEndAssemblySequence:
             m.add_object("bat", bat)
             m.add_object("front", front)
             m.add_object("r", r_step)
-            assert not m.in_collision_internal(), f"Rear shell collided with assembly at trajectory Z = {z:.1f} mm"
+            assert not m.in_collision_internal(), (
+                f"Rear shell collided with assembly at trajectory Z = {z:.1f} mm"
+            )
 
     def test_stage11_full_console_assembly_envelope(self, case_meshes):
         """Stage 11: Verify final assembled console envelope matches target form factor."""
@@ -328,9 +389,17 @@ class TestEndToEndAssemblySequence:
         extents = assembly.extents
 
         # Width: 63.0 mm (+/- 1.0 mm)
-        assert 62.0 <= extents[0] <= 64.5, f"Assembled console width {extents[0]:.2f} mm out of spec"
+        assert 62.0 <= extents[0] <= 64.5, (
+            f"Assembled console width {extents[0]:.2f} mm out of spec"
+        )
         # Height: 80.0 mm (+/- 2.0 mm including shoulder buttons)
-        assert 79.0 <= extents[1] <= 83.0, f"Assembled console height {extents[1]:.2f} mm out of spec"
+        assert 79.0 <= extents[1] <= 83.0, (
+            f"Assembled console height {extents[1]:.2f} mm out of spec"
+        )
         # Total Depth: 18.0 mm (+/- 2.0 mm)
-        assert 16.0 <= extents[2] <= 20.5, f"Assembled console thickness {extents[2]:.2f} mm out of spec"
-        assert assembly.volume > 15000.0, "Assembled console mesh volume is unexpectedly low"
+        assert 16.0 <= extents[2] <= 20.5, (
+            f"Assembled console thickness {extents[2]:.2f} mm out of spec"
+        )
+        assert assembly.volume > 15000.0, (
+            "Assembled console mesh volume is unexpectedly low"
+        )

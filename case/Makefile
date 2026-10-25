@@ -1,11 +1,11 @@
 # ==============================================================================
-# GKD Pixel 3D Snap-Fit Enclosure - Generation & Verification Makefile
+# CopperPilot Retro Handheld 3D Snap-Fit Enclosure - Generation & Verification Makefile
 # ==============================================================================
 
 UV            := $(shell command -v uv 2>/dev/null || echo "$$HOME/.local/bin/uv")
 ifneq ($(wildcard $(UV)),)
 PYTHON        ?= $(UV) run --with trimesh --with numpy --with matplotlib --with Pillow python
-PYTEST        ?= $(UV) run --with pytest --with trimesh --with numpy pytest
+PYTEST        ?= $(UV) run --with pytest --with trimesh --with numpy --with scipy --with networkx --with rtree --with manifold3d --with python-fcl pytest
 else
 PYTHON        ?= python3
 PYTEST        ?= $(shell if python3 -m pytest --version >/dev/null 2>&1; then echo "python3 -m pytest"; else echo "pytest"; fi)
@@ -19,7 +19,7 @@ RENDERS_DIR   := renders
 all: generate test
 
 help:
-	@echo "GKD Pixel Enclosure (case/) Targets:"
+	@echo "CopperPilot Retro Handheld Enclosure (case/) Targets:"
 	@echo "  make generate  - Synthesize parametric 3D CAD models (front bezel, rear shell, door, buttons)"
 	@echo "  make render    - Render 4K isometric, front, rear, and exploded visual projections"
 	@echo "  make test      - Run automated 15-point PyTest enclosure verification suite"

@@ -1,4 +1,4 @@
-"""Automated 15-point verification suite for GKD Pixel 3D Snap-Fit Enclosure models."""
+"""Automated 15-point verification suite for CopperPilot Retro Handheld 3D Snap-Fit Enclosure models."""
 
 import os
 
@@ -24,7 +24,7 @@ class TestCaseFiles:
             "case_rear_grooved.stl",
             "case_battery_door.stl",
             "buttons_dpad_abxy_sest_shoulders.stl",
-            "gkd_pixel_console_assembly.stl",
+            "copperpilot_retro_handheld_assembly.stl",
         ],
     )
     def test_stl_file_exists(self, filename):
@@ -85,7 +85,7 @@ class TestCaseGeometry:
         for filename in [
             "case_front_bezel.stl",
             "case_rear_grooved.stl",
-            "gkd_pixel_console_assembly.stl",
+            "copperpilot_retro_handheld_assembly.stl",
         ]:
             path = os.path.join(MODELS_DIR, filename)
             mesh = trimesh.load(path)
@@ -96,7 +96,7 @@ class TestCaseGeometry:
 
     def test_full_assembly_mesh(self):
         """Assert full mated console assembly matches target form factor."""
-        path = os.path.join(MODELS_DIR, "gkd_pixel_console_assembly.stl")
+        path = os.path.join(MODELS_DIR, "copperpilot_retro_handheld_assembly.stl")
         mesh = trimesh.load(path)
         extents = mesh.extents
         assert 62.0 <= extents[0] <= 65.0, (
@@ -144,7 +144,9 @@ class TestCaseClearancesAndCollisions:
         for i in range(len(buttons)):
             for j in range(i + 1, len(buttons)):
                 b1, b2 = buttons[i], buttons[j]
-                if np.all(b1.bounds[0] >= b2.bounds[1]) or np.all(b2.bounds[0] >= b1.bounds[1]):
+                if np.all(b1.bounds[0] >= b2.bounds[1]) or np.all(
+                    b2.bounds[0] >= b1.bounds[1]
+                ):
                     continue
                 _, d1, _ = b1.nearest.on_surface(b2.vertices)
                 _, d2, _ = b2.nearest.on_surface(b1.vertices)
@@ -157,7 +159,7 @@ class TestCaseClearancesAndCollisions:
         """Assert ABXY action button flanges maintain at least 1.0 mm physical clearance."""
         abxy_centers = [
             (16.51, -15.42),  # X
-            (9.92, -21.74),   # Y
+            (9.92, -21.74),  # Y
             (23.05, -21.83),  # A
             (16.39, -28.02),  # B
         ]
@@ -195,7 +197,7 @@ class TestCaseClearancesAndCollisions:
         assert l_gap >= 0.50, f"L1 to L2 gap {l_gap:.2f} mm is too tight (<0.50 mm)"
 
         r2_right = 13.17 + 6.2 / 2  # 16.27 mm
-        r1_left = 22.0 - 9.6 / 2    # 17.20 mm
+        r1_left = 22.0 - 9.6 / 2  # 17.20 mm
         r_gap = r1_left - r2_right  # 0.93 mm
         assert r_gap >= 0.50, f"R2 to R1 gap {r_gap:.2f} mm is too tight (<0.50 mm)"
 
@@ -207,6 +209,9 @@ class TestCaseClearancesAndCollisions:
         rear = trimesh.load(rear_path)
 
         # Verify both meshes have matching width and height within 0.5 mm
-        assert abs(front.extents[0] - rear.extents[0]) < 0.5, "Front and rear shell widths mismatch"
-        assert abs(front.extents[1] - rear.extents[1]) < 0.5, "Front and rear shell heights mismatch"
-
+        assert abs(front.extents[0] - rear.extents[0]) < 0.5, (
+            "Front and rear shell widths mismatch"
+        )
+        assert abs(front.extents[1] - rear.extents[1]) < 0.5, (
+            "Front and rear shell heights mismatch"
+        )
